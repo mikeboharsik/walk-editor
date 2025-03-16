@@ -4,7 +4,7 @@ const fs = require('fs');
 const app = express();
 const port = 8089;
 
-const metaArchivePath = path.resolve(`${__dirname}/../../../walk-routes/meta_archive`);
+const metaArchivePath = path.resolve(`${__dirname}/../../walk-routes/meta_archive`);
 
 const getFilePathFromDate = (date) => {
 	const [year, month, day] = date.split('-');
