@@ -148,7 +148,7 @@ async function exportEvents(ev, year, month, day) {
       const trimmedStart = e.querySelector('.trimmedStart')?.value || undefined;
       const trimmedEnd = e.querySelector('.trimmedEnd')?.value || undefined;
       const name = e.querySelector('.name')?.value || undefined;
-      const coords = e.querySelector('.coords')?.value.split(',').map(e => parseFloat(e)) || undefined;
+      const coords = e.querySelector('.coords')?.value.split(',').map(e => parseFloat(e)).filter(e => e) || undefined;
       const plates = Array.from(e.querySelectorAll('.plate'))?.map?.(p => ([p.querySelector('.plate-state')?.value, p.querySelector('.plate-value')?.value])).filter(p => !p[1].endsWith('DELETE')) || undefined;
       const tags = Array.from(e.querySelectorAll('.tag-value'))?.map?.(t => t.value);
       const skip = e.querySelector('.skip')?.checked || undefined;
@@ -163,7 +163,7 @@ async function exportEvents(ev, year, month, day) {
         trimmedStart,
         trimmedEnd,
         name,
-        coords,
+        coords: coords.length ? coords : undefined,
         plates: plates.length ? plates : undefined,
         tags: tags.length ? tags : undefined,
         skip,
