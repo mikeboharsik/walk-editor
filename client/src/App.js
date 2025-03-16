@@ -90,8 +90,6 @@ function PlateStateInput({ defaultValue = 'MA' }) {
 function PlateInputs({ plates }) {
   const [newPlates, setNewPlates] = useState([]);
 
-  if (plates === 'HIDE') return null;
-
   if (plates?.length || newPlates.length) {
     return (
       <div>
@@ -151,7 +149,7 @@ async function exportEvents(ev, year, month, day) {
       const trimmedEnd = e.querySelector('.trimmedEnd')?.value || undefined;
       const name = e.querySelector('.name')?.value || undefined;
       const coords = e.querySelector('.coords')?.value.split(',').map(e => parseFloat(e)) || undefined;
-      const plates = Array.from(e.querySelectorAll('.plate'))?.map?.(p => ([p.querySelector('.plate-state')?.value, p.querySelector('.plate-value')?.value])).filter(p => !p[1].endsWith('DELETE'));
+      const plates = Array.from(e.querySelectorAll('.plate'))?.map?.(p => ([p.querySelector('.plate-state')?.value, p.querySelector('.plate-value')?.value])).filter(p => !p[1].endsWith('DELETE')) || undefined;
       const tags = Array.from(e.querySelectorAll('.tag-value'))?.map?.(t => t.value);
       const skip = e.querySelector('.skip')?.checked || undefined;
       const resi = e.querySelector('.resi')?.checked || undefined;
@@ -258,9 +256,12 @@ function VideoPreview({ revert }) {
 }
 
 function handleTrimmedStartClick(e) {
+  const newTime = timestampToCurrentTime(e.target.value);
   if (e.ctrlKey) {
-    const newTime = timestampToCurrentTime(e.target.value);
     document.querySelector('#wip-video').currentTime = newTime - 10; // assume it's off by 10 seconds
+  }
+  if (e.altKey) {
+    document.querySelector('#wip-video').currentTime = newTime;
   }
 }
 
@@ -268,9 +269,9 @@ function EventInputs({ year, month, day, walks, walkIdx, revert, loadWalkData, u
   const addEvent = useCallback((walkIdx, eventIdx, before) => {
     const walk = walks[walkIdx];
     if (before) {
-      walk.events = walk.events.toSpliced(eventIdx, 0, { id: crypto.randomUUID() });
+      walk.events = walk.events.toSpliced(eventIdx, 0, { id: crypto.randomUUID(), plates: [], coords: undefined });
     } else {
-      walk.events = walk.events.toSpliced(eventIdx + 1, 0, { id: crypto.randomUUID() });
+      walk.events = walk.events.toSpliced(eventIdx + 1, 0, { id: crypto.randomUUID(), plates: [], coords: undefined });
     }
     updateWalks([...walks]);
   }, [updateWalks, walks]);
@@ -330,7 +331,7 @@ function EventInputs({ year, month, day, walks, walkIdx, revert, loadWalkData, u
                 </div>
 
                 <div>
-                  <PlateInputs plates={((!e.tags || e.tags.length === 0) && e.plates) || 'HIDE'} />
+                  <PlateInputs plates={((!e.tags || e.tags.length === 0) && e.plates) || []} />
                 </div>
 
                 <div>
