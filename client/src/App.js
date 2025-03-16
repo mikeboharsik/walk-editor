@@ -79,7 +79,8 @@ const states = [
   "MP",
   "PR",
   "UM",
-  "VI"
+  "VI",
+  "?",
 ];
 
 function PlateStateInput({ defaultValue = 'MA' }) {
@@ -189,7 +190,6 @@ function VideoPreview({ revert }) {
       <div
         id="video-container"
         style={{
-          width: '1280px',
           height: '100vh',
           overflow: 'hidden',
           display: 'flex',
@@ -202,11 +202,13 @@ function VideoPreview({ revert }) {
           {revert && <span style={{ position: 'absolute', cursor: 'pointer', top: '2.5%' }} onClick={revert}>{'←'}</span>}
         </div>
         {vidSrc && <video
+          onDoubleClick={(e) => e.preventDefault()}
           onTimeUpdate={(e) => {setCurrentTime(e.target.currentTime)}}
           id="wip-video"
           src={vidSrc}
           controls
-          style={{ display: 'inline-block', scale: vidZoom, translate: `${vidOffset[0]}px ${vidOffset[1]}px`, width: 1280 }}
+          controlsList="nofullscreen"
+          style={{ marginBottom: '2.5em', display: 'inline-block', scale: vidZoom, translate: `${vidOffset[0]}px ${vidOffset[1]}px`, width: '100%' }}
           onWheel={(e) => {
             if (e.ctrlKey) {
               let newVal = vidZoom;   
@@ -231,7 +233,7 @@ function VideoPreview({ revert }) {
 
         <div
           id="video-controls-container"
-          style={{ position: 'absolute', bottom: '5%' }}
+          style={{ position: 'absolute', bottom: '0.5em' }}
         >
           <div>
             <button onClick={() => {
@@ -262,7 +264,29 @@ function handleTrimmedStartClick(e) {
   }
 }
 
-function EventInputs({ year, month, day, walks, walkIdx, revert, loadWalkData }) {
+function EventInputs({ year, month, day, walks, walkIdx, revert, loadWalkData, updateWalks }) {
+  const addEvent = useCallback((walkIdx, eventIdx, before) => {
+    const walk = walks[walkIdx];
+    if (before) {
+      walk.events = walk.events.toSpliced(eventIdx, 0, { id: crypto.randomUUID() });
+    } else {
+      walk.events = walk.events.toSpliced(eventIdx + 1, 0, { id: crypto.randomUUID() });
+    }
+    updateWalks([...walks]);
+  }, [updateWalks, walks]);
+
+  const deleteEvent = useCallback((walkIdx, eventIdx) => {
+    const walk = walks[walkIdx];
+    walk.events = walk.events.toSpliced(eventIdx, 1);
+    updateWalks([...walks]);
+  }, [updateWalks, walks]);
+
+  const detectDelete = useCallback((e, walkIdx, eventIdx) => {
+    if (e.target.value.toUpperCase() === 'DELETE') {
+      deleteEvent(walkIdx, eventIdx);
+    }
+  }, [deleteEvent]);
+
   if (year && month && day && walks) {
     const { events } = walks[walkIdx];
     return (
@@ -270,21 +294,57 @@ function EventInputs({ year, month, day, walks, walkIdx, revert, loadWalkData })
         <div style={{ width: '80%' }}>
           <VideoPreview revert={revert} />
         </div>
-        <div>
-          <div id="eventInputs" style={{ height: '100vh', overflow: 'scroll' }}>
-            <span></span>
-            {events.map(e => (
-              <div className="event" style={{ fontSize: '18px' }} key={e.id}>
-                <span onClick={() => { window.open(`https://www.google.com/maps/place/${e.coords[0]},${e.coords[1]}`, '_blank') }}>Name:</span> <input disabled={e.tags} className="name" type="text" defaultValue={e.name}></input>
-                Trimmed start: <input onClick={handleTrimmedStartClick} className="trimmedStart" style={{ textAlign: 'center', width: '6.2em' }} type="text" defaultValue={e.trimmedStart}></input>
-                Trimmed end: <input className="trimmedEnd" style={{ textAlign: 'center', width: '6.2em' }} type="text" defaultValue={e.trimmedEnd}></input>
-                Skip: <input className="skip" type="checkbox" defaultChecked={e.skip === true}></input>
-                Resi: <input className="resi" type="checkbox" defaultChecked={e.resi === true}></input>
-                <input className="coords" type="hidden" defaultValue={e.coords}></input>
-                <input className="mark" type="hidden" defaultValue={e.mark}></input>
-                <input className="id" type="hidden" defaultValue={e.id}></input>
-                <PlateInputs plates={((!e.tags || e.tags.length === 0) && e.plates) || 'HIDE'} />
-                <TagInputs tags={e.tags} />
+        <div style={{ width: '20%' }}>
+          <div id="eventInputs" style={{ width: '100%', height: '100vh', overflow: 'scroll' }}>
+            {events.map((e, idx) => (
+              <div className="event" style={{ textAlign: 'left', fontSize: '18px', padding: '0 1em' }} key={e.id}>
+                <div style={{ textAlign: 'center' }}>
+                  <button onClick={() => addEvent(walkIdx, idx, true)}>Add event before</button>
+                </div>
+
+                <div>
+                  Trimmed start: <input onClick={handleTrimmedStartClick} className="trimmedStart" style={{ textAlign: 'center', width: '6.2em' }} type="text" defaultValue={e.trimmedStart}></input>
+                </div>
+
+                <div>
+                  <span onClick={() => { window.open(`https://www.google.com/maps/place/${e.coords[0]},${e.coords[1]}`, '_blank') }}>
+                    Name:
+                  </span>
+                  <input disabled={e.tags} onChange={(e) => detectDelete(e, walkIdx, idx)} className="name" type="text" defaultValue={e.name}></input>
+                </div>
+
+                <div>
+                  Trimmed end: <input className="trimmedEnd" style={{ textAlign: 'center', width: '6.2em' }} type="text" defaultValue={e.trimmedEnd}></input>
+                </div>
+
+                <div>
+                  <input className="coords" type="hidden" defaultValue={e.coords}></input>
+                </div>
+
+                <div>
+                  <input className="mark" type="hidden" defaultValue={e.mark}></input>
+                </div>
+
+                <div>
+                  <input className="id" type="hidden" defaultValue={e.id}></input>
+                </div>
+
+                <div>
+                  <PlateInputs plates={((!e.tags || e.tags.length === 0) && e.plates) || 'HIDE'} />
+                </div>
+
+                <div>
+                  Skip: <input className="skip" type="checkbox" defaultChecked={e.skip === true}></input>
+                  Resi: <input className="resi" type="checkbox" defaultChecked={e.resi === true}></input>
+                </div>
+
+                <div>
+                  <TagInputs tags={e.tags} />
+                </div>
+                
+                <div style={{ textAlign: 'center' }}>
+                  <button onClick={() => addEvent(walkIdx, idx, false)}>Add event after</button>
+                </div>
                 <hr />
               </div>
             ))}
@@ -369,6 +429,7 @@ function App() {
           month={selectedMonth}
           day={selectedDay}
           walks={dateData}
+          updateWalks={setDateData}
           walkIdx={selectedWalk}
           revert={() => { setSelectedDay(null); localStorage.removeItem('selectedDay'); }}
           loadWalkData={loadWalkData}
