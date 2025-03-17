@@ -197,7 +197,7 @@ function VideoPreview({ revert }) {
         }}
       >
         <div>
-          {revert && <span style={{ position: 'absolute', cursor: 'pointer', top: '2.5%' }} onClick={revert}>{'←'}</span>}
+          {revert && <span style={{ position: 'absolute', cursor: 'pointer', top: '2.5%', zIndex: 10 }} onClick={revert}>{'←'}</span>}
         </div>
         {vidSrc && <video
           onDoubleClick={(e) => e.preventDefault()}
@@ -267,11 +267,13 @@ function handleTrimmedStartClick(e) {
 
 function EventInputs({ year, month, day, walks, walkIdx, revert, loadWalkData, updateWalks }) {
   const addEvent = useCallback((walkIdx, eventIdx, before) => {
+    const currentVideoTime = currentTimeToTimestamp(document.querySelector('#wip-video').currentTime);
     const walk = walks[walkIdx];
+    const newEvent = { id: crypto.randomUUID(), trimmedStart: currentVideoTime, plates: [], coords: undefined };
     if (before) {
-      walk.events = walk.events.toSpliced(eventIdx, 0, { id: crypto.randomUUID(), plates: [], coords: undefined });
+      walk.events = walk.events.toSpliced(eventIdx, 0, newEvent);
     } else {
-      walk.events = walk.events.toSpliced(eventIdx + 1, 0, { id: crypto.randomUUID(), plates: [], coords: undefined });
+      walk.events = walk.events.toSpliced(eventIdx + 1, 0, newEvent);
     }
     updateWalks([...walks]);
   }, [updateWalks, walks]);
