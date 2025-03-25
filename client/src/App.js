@@ -170,6 +170,19 @@ async function exportEvents(ev, year, month, day) {
         resi,
       };
     }).filter(e => e && e.name !== 'DELETE');
+
+  const invalidEvents = [];
+  updatedEvents.forEach((ev, idx) => {
+    const { trimmedStart, trimmedEnd } = ev;
+    if (trimmedStart && trimmedEnd && trimmedStart >= trimmedEnd) {
+      invalidEvents.push([idx, 'trimmedStart is greater than or equal to trimmedEnd']);
+    }
+  });
+  if (invalidEvents.length > 0) {
+    alert(`Invalid events detected, failed to save: ${JSON.stringify(invalidEvents)}`);
+    return;
+  }
+
   if (ev.ctrlKey) {
     console.log(JSON.stringify(updatedEvents, null, '  '));
   } else {
