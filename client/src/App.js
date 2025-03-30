@@ -173,7 +173,10 @@ async function exportEvents(ev, year, month, day) {
 
   const invalidEvents = [];
   updatedEvents.forEach((ev, idx) => {
-    const { plates, skip, trimmedStart, trimmedEnd } = ev;
+    const { name, plates, skip, trimmedStart, trimmedEnd } = ev;
+
+    if (name.toUpperCase() === 'DELETE') return;
+
     if (!skip && trimmedStart && trimmedEnd && trimmedStart >= trimmedEnd) {
       invalidEvents.push([idx, 'trimmedStart is greater than or equal to trimmedEnd']);
     } else if (plates?.some(([state, val]) => state && !val)) {
