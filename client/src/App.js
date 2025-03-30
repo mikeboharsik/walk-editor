@@ -319,6 +319,7 @@ function EventInputs({ year, month, day, walks, walkIdx, revert, loadWalkData, u
                 className="event"
                 style={{ textAlign: 'left', fontSize: '18px', padding: '0 1em' }}
                 key={e.id}
+                title={`${idx} - ${e.id}`}
               >
                 <div>
                   Trimmed start: <input onClick={handleTrimmedStartClick} className="trimmedStart" style={{ textAlign: 'center', width: '6.2em' }} type="text" defaultValue={e.trimmedStart}></input>
