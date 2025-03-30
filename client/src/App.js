@@ -315,11 +315,11 @@ function EventInputs({ year, month, day, walks, walkIdx, revert, loadWalkData, u
         <div style={{ width: '20%' }}>
           <div id="eventInputs" style={{ width: '100%', height: '100vh', overflow: 'scroll' }}>
             {events.map((e, idx) => (
-              <div className="event" style={{ textAlign: 'left', fontSize: '18px', padding: '0 1em' }} key={e.id}>
-                <div style={{ textAlign: 'center' }}>
-                  <button onClick={() => addEvent(walkIdx, idx, true)}>Add event before</button>
-                </div>
-
+              <div
+                className="event"
+                style={{ textAlign: 'left', fontSize: '18px', padding: '0 1em' }}
+                key={e.id}
+              >
                 <div>
                   Trimmed start: <input onClick={handleTrimmedStartClick} className="trimmedStart" style={{ textAlign: 'center', width: '6.2em' }} type="text" defaultValue={e.trimmedStart}></input>
                 </div>
@@ -360,10 +360,9 @@ function EventInputs({ year, month, day, walks, walkIdx, revert, loadWalkData, u
                   <TagInputs tags={e.tags} />
                 </div>
                 
-                <div style={{ textAlign: 'center' }}>
-                  <button onClick={() => addEvent(walkIdx, idx, false)}>Add event after</button>
+                <div style={{ textAlign: 'center', margin: '1em 0' }}>
+                  <button onClick={() => addEvent(walkIdx, idx, false)}>Add event</button>
                 </div>
-                <hr />
               </div>
             ))}
             <button onClick={async (ev) => { await exportEvents(ev, year, month, day); await loadWalkData(); }}>Submit</button>
