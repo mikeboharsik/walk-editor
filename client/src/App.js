@@ -84,7 +84,7 @@ const states = [
 ];
 
 function PlateStateInput({ defaultValue = 'MA' }) {
-  return <select defaultValue={defaultValue} className="plate-state">{states.map(e => <option value={e}>{e}</option>)}</select>;
+  return <select onChange={() => backupEvents()} defaultValue={defaultValue} className="plate-state">{states.map(e => <option key={e} value={e}>{e}</option>)}</select>;
 }
 
 function PlateInputs({ plates }) {
@@ -94,9 +94,9 @@ function PlateInputs({ plates }) {
     return (
       <div>
         {(plates || []).concat(newPlates).map((e, idx, arr) => (
-          <div className="plate">
+          <div key={e + idx} className="plate">
             <PlateStateInput defaultValue={e[0]} />
-            <input key={e} className="plate-value" type="text" defaultValue={e[1]}></input>
+            <input onChange={() => backupEvents()}className="plate-value" type="text" defaultValue={e[1]}></input>
             {idx === arr.length - 1 && <span onClick={() => setNewPlates(e => [...e, ''])}>{'+'}</span>}
           </div>
         ))}
@@ -113,7 +113,7 @@ function TagInputs({ tags }) {
       <div>
         {(tags || []).concat(newTags).map((e, idx, arr) => (
           <div className="tag">
-            <input key={e} className="tag-value" type="text" defaultValue={e}></input>
+            <input key={e} onChange={() => backupEvents()} className="tag-value" type="text" defaultValue={e}></input>
             {idx === arr.length - 1 && <span onClick={() => setNewTags(e => [...e, ''])}>{'+'}</span>}
           </div>
         ))}
@@ -141,15 +141,15 @@ function jumpToTime() {
   document.querySelector('#wip-video').currentTime = timestampToCurrentTime(targetTime);
 }
 
-async function exportEvents(ev, year, month, day) {
-  const updatedEvents = Array.from(document.querySelector('#eventInputs').querySelectorAll('.event'))
+function getAllEvents() {
+  return Array.from(document.querySelector('#eventInputs').querySelectorAll('.event'))
     .map(e => {
       const mark = e.querySelector('.mark')?.value || undefined;
       const trimmedStart = e.querySelector('.trimmedStart')?.value || undefined;
       const trimmedEnd = e.querySelector('.trimmedEnd')?.value || undefined;
       const name = e.querySelector('.name')?.value || undefined;
       const coords = e.querySelector('.coords')?.value.split(',').map(e => parseFloat(e)).filter(e => e) || undefined;
-      const plates = Array.from(e.querySelectorAll('.plate'))?.map?.(p => ([p.querySelector('.plate-state')?.value, p.querySelector('.plate-value')?.value])).filter(p => !p[1].endsWith('DELETE')) || undefined;
+      const plates = Array.from(e.querySelectorAll('.plate'))?.map?.(p => ([p.querySelector('.plate-state')?.value, p.querySelector('.plate-value')?.value])).filter(p => !p[1].toUpperCase().endsWith('DELETE')) || undefined;
       const tags = Array.from(e.querySelectorAll('.tag-value'))?.map?.(t => t.value);
       const skip = e.querySelector('.skip')?.checked || undefined;
       const resi = e.querySelector('.resi')?.checked || undefined;
@@ -170,12 +170,21 @@ async function exportEvents(ev, year, month, day) {
         resi,
       };
     }).filter(e => e && e.name !== 'DELETE');
+}
+
+function backupEvents() {
+  const events = getAllEvents();
+  localStorage.setItem('backup', JSON.stringify(events));
+}
+
+async function exportEvents(ev, year, month, day) {
+  const updatedEvents = getAllEvents();
 
   const invalidEvents = [];
   updatedEvents.forEach((ev, idx) => {
     const { name, plates, skip, trimmedStart, trimmedEnd } = ev;
 
-    if (name.toUpperCase() === 'DELETE') return;
+    if (name?.toUpperCase() === 'DELETE') return;
 
     if (!skip && trimmedStart && trimmedEnd && trimmedStart >= trimmedEnd) {
       invalidEvents.push([idx, 'trimmedStart is greater than or equal to trimmedEnd']);
@@ -263,7 +272,7 @@ function VideoPreview({ revert }) {
           <div>
             <button onClick={() => document.querySelector('#wip-video').currentTime -= 1.0}>{'<-'}</button>
             <button onClick={() => document.querySelector('#wip-video').currentTime -= (1 / 59.94)}>{'<'}</button>
-            <input type="text" value={currentTimeToTimestamp(currentTime)}></input>
+            <input type="text" value={currentTimeToTimestamp(currentTime)} readOnly></input>
             <button onClick={() => document.querySelector('#wip-video').currentTime += (1 / 59.94)}>{'>'}</button>
             <button onClick={() => document.querySelector('#wip-video').currentTime += 1.0}>{'->'}</button>
           </div>
@@ -325,18 +334,18 @@ function EventInputs({ year, month, day, walks, walkIdx, revert, loadWalkData, u
                 title={`${idx} - ${e.id}`}
               >
                 <div>
-                  Trimmed start: <input onClick={handleTrimmedStartClick} className="trimmedStart" style={{ textAlign: 'center', width: '6.2em' }} type="text" defaultValue={e.trimmedStart}></input>
+                  Trimmed start: <input onClick={handleTrimmedStartClick} onChange={() => backupEvents()} className="trimmedStart" style={{ textAlign: 'center', width: '6.2em' }} type="text" defaultValue={e.trimmedStart}></input>
                 </div>
 
                 <div>
                   <span onClick={() => { window.open(`https://www.google.com/maps/place/${e.coords[0]},${e.coords[1]}`, '_blank') }}>
                     Name:
                   </span>
-                  <input disabled={e.tags} onChange={(e) => detectDelete(e, walkIdx, idx)} className="name" type="text" defaultValue={e.name}></input>
+                  <input disabled={e.tags} onChange={(e) => { detectDelete(e, walkIdx, idx); backupEvents(); }} className="name" type="text" defaultValue={e.name}></input>
                 </div>
 
                 <div>
-                  Trimmed end: <input className="trimmedEnd" style={{ textAlign: 'center', width: '6.2em' }} type="text" defaultValue={e.trimmedEnd}></input>
+                  Trimmed end: <input className="trimmedEnd" onChange={() => backupEvents()} style={{ textAlign: 'center', width: '6.2em' }} type="text" defaultValue={e.trimmedEnd}></input>
                 </div>
 
                 <div>
@@ -356,8 +365,8 @@ function EventInputs({ year, month, day, walks, walkIdx, revert, loadWalkData, u
                 </div>
 
                 <div>
-                  Skip: <input className="skip" type="checkbox" defaultChecked={e.skip === true}></input>
-                  Resi: <input className="resi" type="checkbox" defaultChecked={e.resi === true}></input>
+                  Skip: <input className="skip" type="checkbox" onChange={() => backupEvents()} defaultChecked={e.skip === true}></input>
+                  Resi: <input className="resi" type="checkbox" onChange={() => backupEvents()} defaultChecked={e.resi === true}></input>
                 </div>
 
                 <div>
