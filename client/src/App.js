@@ -80,6 +80,8 @@ const states = [
   "PR",
   "UM",
   "VI",
+  "ONTARIO",
+  "QUEBEC",
   "?",
 ];
 
