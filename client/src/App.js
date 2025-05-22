@@ -193,7 +193,11 @@ function backupEvents() {
   localStorage.setItem('backup', JSON.stringify(events));
 }
 
-async function exportEvents(ev, year, month, day) {
+async function sendUpdatedEvents(year, month, day, walkIdx, body) {
+  return await fetch(`${baseUrl}/date/${year}-${month}-${day}/${walkIdx}/events`, { method: 'put', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
+}
+
+async function exportEvents(ev, year, month, day, walkIdx) {
   const updatedEvents = getAllEvents();
 
   const invalidEvents = [];
@@ -216,7 +220,12 @@ async function exportEvents(ev, year, month, day) {
   if (ev.ctrlKey) {
     console.log(JSON.stringify(updatedEvents, null, '  '));
   } else {
-    fetch(`${baseUrl}/date/${year}-${month}-${day}/0/events`, { method: 'put', headers: { 'content-type': 'application/json' }, body: JSON.stringify(updatedEvents) });
+    try {
+      await sendUpdatedEvents(year, month, day, walkIdx, updatedEvents);
+      alert(`Updated ${year}-${month}-${day} walk ${walkIdx}`);
+    } catch (e) {
+      alert(`Failed to update ${year}-${month}-${day} walk ${walkIdx}`);
+    }
   }
 }
 
@@ -299,16 +308,19 @@ function VideoPreview({ revert }) {
 }
 
 function handleTrimmedStartClick(e) {
-  const newTime = timestampToCurrentTime(e.target.value);
-  if (e.ctrlKey) {
-    document.querySelector('#wip-video').currentTime = newTime - 10; // assume it's off by 10 seconds
-  }
-  if (e.altKey) {
-    document.querySelector('#wip-video').currentTime = newTime;
+  const player = document.querySelector('#wip-video');
+  if (player) {
+    const newTime = timestampToCurrentTime(e.target.value);
+    if (e.ctrlKey) {
+      player.currentTime = newTime - 10; // assume it's off by 10 seconds
+    }
+    if (e.altKey) {
+      player.currentTime = newTime;
+    }
   }
 }
 
-function EventInputs({ year, month, day, walks, walkIdx, revert, loadWalkData, updateWalks }) {
+function EventInputs({ year, month, day, walks, walkIdx, revert, loadWalkData, updateWalks, setSelectedWalk }) {
   const addEvent = useCallback((walkIdx, eventIdx, before) => {
     const currentVideoTime = currentTimeToTimestamp(document.querySelector('#wip-video').currentTime);
     const walk = walks[walkIdx];
@@ -341,6 +353,16 @@ function EventInputs({ year, month, day, walks, walkIdx, revert, loadWalkData, u
           <VideoPreview revert={revert} />
         </div>
         <div style={{ width: '20%' }}>
+          <div>
+            {walks.map((_, idx) => (
+              <span
+                style={idx === walkIdx ? { fontWeight: 'bold' } : { cursor: 'pointer' }}
+                onClick={() => setSelectedWalk(idx)}
+              >
+                {idx}
+              </span>
+            ))}
+          </div>
           <div id="eventInputs" style={{ width: '100%', height: '100vh', overflow: 'scroll' }}>
             {events.map((e, idx) => (
               <div
@@ -394,7 +416,7 @@ function EventInputs({ year, month, day, walks, walkIdx, revert, loadWalkData, u
                 </div>
               </div>
             ))}
-            <button onClick={async (ev) => { await exportEvents(ev, year, month, day); await loadWalkData(); }}>Submit</button>
+            <button onClick={async (ev) => { await exportEvents(ev, year, month, day, walkIdx); await loadWalkData(); }}>Submit</button>
           </div>
         </div>
       </div>
@@ -477,6 +499,7 @@ function App() {
           walks={dateData}
           updateWalks={setDateData}
           walkIdx={selectedWalk}
+          setSelectedWalk={setSelectedWalk}
           revert={() => { setSelectedDay(null); localStorage.removeItem('selectedDay'); }}
           loadWalkData={loadWalkData}
         />
