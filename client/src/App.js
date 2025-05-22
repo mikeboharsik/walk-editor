@@ -322,9 +322,17 @@ function handleTrimmedStartClick(e) {
 
 function EventInputs({ year, month, day, walks, walkIdx, revert, loadWalkData, updateWalks, setSelectedWalk }) {
   const addEvent = useCallback((walkIdx, eventIdx, before) => {
-    const currentVideoTime = currentTimeToTimestamp(document.querySelector('#wip-video').currentTime);
+    const player = document.querySelector('#wip-video');
+    if (!player) {
+      alert('Load a video first!');
+      return;
+    }
+    const currentVideoTime = currentTimeToTimestamp(player.currentTime);
     const walk = walks[walkIdx];
     const newEvent = { id: crypto.randomUUID(), trimmedStart: currentVideoTime, plates: [], coords: undefined };
+    if (walk.events.length === 0) {
+      walk.events = [];
+    }
     if (before) {
       walk.events = walk.events.toSpliced(eventIdx, 0, newEvent);
     } else {
@@ -353,7 +361,7 @@ function EventInputs({ year, month, day, walks, walkIdx, revert, loadWalkData, u
           <VideoPreview revert={revert} />
         </div>
         <div style={{ width: '20%' }}>
-          <div>
+          <div style={{ display: 'flex', justifyContent: 'space-evenly' }}>
             {walks.map((_, idx) => (
               <span
                 style={idx === walkIdx ? { fontWeight: 'bold' } : { cursor: 'pointer' }}
@@ -363,8 +371,11 @@ function EventInputs({ year, month, day, walks, walkIdx, revert, loadWalkData, u
               </span>
             ))}
           </div>
-          <div id="eventInputs" style={{ width: '100%', height: '100vh', overflow: 'scroll' }}>
-            {events.map((e, idx) => (
+          <div id="eventInputs" style={{ width: '100%', height: '95vh', overflow: 'scroll' }}>
+            {!events.length && <div style={{ textAlign: 'center', margin: '1em 0' }}>
+                  <button onClick={() => addEvent(walkIdx, 0, false)}>Add event</button>
+                </div>}
+            {(events.length && events.map((e, idx) => (
               <div
                 className="event"
                 style={{ textAlign: 'left', fontSize: '18px', padding: '0 1em' }}
@@ -415,8 +426,8 @@ function EventInputs({ year, month, day, walks, walkIdx, revert, loadWalkData, u
                   <button onClick={() => addEvent(walkIdx, idx, false)}>Add event</button>
                 </div>
               </div>
-            ))}
-            <button onClick={async (ev) => { await exportEvents(ev, year, month, day, walkIdx); await loadWalkData(); }}>Submit</button>
+            ))) || null}
+            {events.length ? <button onClick={async (ev) => { await exportEvents(ev, year, month, day, walkIdx); await loadWalkData(); }}>Submit</button> : null}
           </div>
         </div>
       </div>
