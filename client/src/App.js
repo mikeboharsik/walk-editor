@@ -360,7 +360,7 @@ function EventInputs({ year, month, day, walks, walkIdx, revert, loadWalkData, u
         <div style={{ width: '80%' }}>
           <VideoPreview revert={revert} />
         </div>
-        <div style={{ width: '20%' }}>
+        <div style={{ width: '20%', borderLeft: '1px solid gray' }}>
           <div style={{ display: 'flex', justifyContent: 'space-evenly' }}>
             {walks.map((_, idx) => (
               <span
