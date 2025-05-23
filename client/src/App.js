@@ -113,7 +113,7 @@ function PlateInputs({ plates }) {
           <div key={e + idx} className="plate">
             <PlateStateInput defaultValue={e[0]} />
             <input onChange={() => backupEvents()}className="plate-value" type="text" defaultValue={e[1]}></input>
-            {idx === arr.length - 1 && <span onClick={() => setNewPlates(e => [...e, ''])}>{'+'}</span>}
+            {idx === arr.length - 1 && <span style={{ cursor: 'pointer' }} onClick={() => setNewPlates(e => [...e, ''])}>{'+'}</span>}
           </div>
         ))}
       </div>
@@ -357,21 +357,21 @@ function EventInputs({ year, month, day, walks, walkIdx, revert, loadWalkData, u
     const { events } = walks[walkIdx];
     return (
       <div style={{ display: 'flex', width: '100%' }}>
-        <div style={{ width: '80%' }}>
+        <div style={{ width: '85%' }}>
           <VideoPreview revert={revert} />
         </div>
-        <div style={{ width: '20%', borderLeft: '1px solid gray' }}>
+        <div style={{ width: '15%', borderLeft: '1px solid gray', height: '100vh', overflow: 'scroll' }}>
           <div style={{ display: 'flex', justifyContent: 'space-evenly' }}>
-            {walks.map((_, idx) => (
+            {(walks?.length > 1 && walks.map((_, idx) => (
               <span
                 style={idx === walkIdx ? { fontWeight: 'bold' } : { cursor: 'pointer' }}
                 onClick={() => setSelectedWalk(idx)}
               >
                 {idx}
               </span>
-            ))}
+            ))) || null}
           </div>
-          <div id="eventInputs" style={{ width: '100%', height: '95vh', overflow: 'scroll' }}>
+          <div id="eventInputs" style={{ width: '100%' }}>
             {!events.length && <div style={{ textAlign: 'center', margin: '1em 0' }}>
                   <button onClick={() => addEvent(walkIdx, 0, false)}>Add event</button>
                 </div>}
@@ -380,13 +380,20 @@ function EventInputs({ year, month, day, walks, walkIdx, revert, loadWalkData, u
                 className="event"
                 style={{ textAlign: 'left', fontSize: '18px', padding: '0 1em' }}
                 key={e.id}
-                title={`${idx} - ${e.id}`}
               >
-                <div>
-                  Trimmed start: <input onClick={handleTrimmedStartClick} onChange={() => backupEvents()} className="trimmedStart" style={{ textAlign: 'center', width: '6.2em' }} type="text" defaultValue={e.trimmedStart}></input>
+                <div title={`Mark: ${e.mark}`}>
+                  Trimmed start:
+                  <input
+                    onClick={handleTrimmedStartClick}
+                    onChange={() => backupEvents()}
+                    className="trimmedStart"
+                    style={{ textAlign: 'center', width: '6.2em' }}
+                    type="text"
+                    defaultValue={e.trimmedStart}
+                  ></input>
                 </div>
 
-                <div>
+                <div title={`${idx} - ${e.id}`}>
                   <span onClick={() => { window.open(`https://www.google.com/maps/place/${e.coords[0]},${e.coords[1]}`, '_blank') }}>
                     Name:
                   </span>
