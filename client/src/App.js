@@ -249,7 +249,7 @@ function VideoPreview({ revert }) {
         }}
       >
         <div>
-          {revert && <span style={{ position: 'absolute', cursor: 'pointer', top: '2.5%', zIndex: 10 }} onClick={revert}>{'←'}</span>}
+          {revert && <span style={{ textShadow: '0px 0px 4px black', position: 'absolute', cursor: 'pointer', top: '2.5%', zIndex: 10 }} onClick={revert}>{'←'}</span>}
         </div>
         {vidSrc && <video
           onDoubleClick={(e) => e.preventDefault()}
@@ -357,13 +357,14 @@ function EventInputs({ year, month, day, walks, walkIdx, revert, loadWalkData, u
     const { events } = walks[walkIdx];
     return (
       <div style={{ display: 'flex', width: '100%' }}>
-        <div style={{ width: '85%' }}>
+        <div style={{ width: '80%' }}>
           <VideoPreview revert={revert} />
         </div>
-        <div style={{ width: '15%', borderLeft: '1px solid gray', height: '100vh', overflow: 'scroll' }}>
+        <div style={{ width: '20%', borderLeft: '1px solid gray', height: '100vh', overflow: 'scroll' }}>
           <div style={{ display: 'flex', justifyContent: 'space-evenly' }}>
             {(walks?.length > 1 && walks.map((_, idx) => (
               <span
+                key={_.events?.at(0)?.id}
                 style={idx === walkIdx ? { fontWeight: 'bold' } : { cursor: 'pointer' }}
                 onClick={() => setSelectedWalk(idx)}
               >
@@ -453,11 +454,21 @@ function App() {
   const [selectedDay, setSelectedDay] = useState(localStorage.getItem('selectedDay') ?? null);
   const [selectedWalk, setSelectedWalk] = useState(localStorage.getItem('selectedWalk') ?? 0);
 
+  if (!window.restoreBackup) {
+    window.restoreBackup = () => {
+      const backup = localStorage.getItem('backup');
+      if (!backup) {
+        return alert('No backup to restore');
+      }
+      setDateData([{ events: JSON.parse(backup) }]);
+    };
+  }
+
   const loadWalkData = useCallback(async () => {
     await fetch(`${baseUrl}/date/${selectedYear}-${selectedMonth}-${selectedDay}`, { headers: { 'cache-control': 'no-cache' } })
       .then(r => r.json())
-      .then(r => setDateData(JSON.parse(r)))
-      .catch(() => { localStorage.removeItem('selectedDay'); window.location.reload(); });
+      .then(r => setDateData(r))
+      .catch((e) => { console.error(e); localStorage.removeItem('selectedDay'); window.location.reload(); });
   }, [selectedYear, selectedMonth, selectedDay]);
 
   useEffect(() => {

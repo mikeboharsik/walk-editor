@@ -13,12 +13,12 @@ const getFilePathFromDate = (date) => {
 
 const getFile = (date) => {
 	const path = getFilePathFromDate(date);
-	return fs.readFileSync(path, 'utf8');
+	return JSON.parse(fs.readFileSync(path, 'utf8'));
 }
 
 const setEvents = (date, walk, newEvents) => {
 	const path = getFilePathFromDate(date);
-	const allWalks = JSON.parse(getFile(date));
+	const allWalks = getFile(date);
 	const updatedWalk = allWalks[walk];
 	updatedWalk.events = newEvents;
 	fs.writeFileSync(path, JSON.stringify(allWalks, null, '  '));
