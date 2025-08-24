@@ -64,6 +64,7 @@ function App() {
 
   return (
     <div className="App" onWheel={(e) => { if (e.ctrlKey) e.preventDefault() } }>
+      <title>{`${selectedYear}${selectedMonth ? '-' + selectedMonth : ''}${selectedDay ? '-' + selectedDay : ''}${selectedDay ? ' ' + selectedWalk : ''}`}</title>
       <header className="App-header">
         <DateComponentSelector
           isVisible={selectedYear === null && years}

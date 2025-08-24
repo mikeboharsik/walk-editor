@@ -3,6 +3,8 @@ import { useState } from 'react';
 import currentTimeToTimestamp from '../util/currentTimeToTimestamp';
 import timestampToCurrentTime from '../util/timestampToCurrentTime';
 
+import VideoElement from './VideoElement';
+
 function jumpToTime() {
   const targetTime = document.querySelector('#jump-to-time').value;
   document.querySelector('#wip-video').currentTime = timestampToCurrentTime(targetTime);
@@ -29,32 +31,16 @@ export default function VideoPreview({ revert }) {
 			>
 				<div>
 					{revert && <span style={{ textShadow: '0px 0px 4px black', position: 'absolute', cursor: 'pointer', top: '2.5%', zIndex: 10 }} onClick={revert}>{'←'}</span>}
+					{vidSrc && <span style={{ textShadow: '0px 0px 4px black', left: '32px', position: 'absolute', cursor: 'pointer', top: '2.5%', zIndex: 10 }} onClick={() => setVidSrc(null)}>{'X'}</span>}
 				</div>
-				{vidSrc && <video
-					onDoubleClick={(e) => e.preventDefault()}
-					onTimeUpdate={(e) => {setCurrentTime(e.target.currentTime)}}
-					id="wip-video"
-					src={vidSrc}
-					controls
-					controlsList="nofullscreen"
-					style={{ marginBottom: '2.5em', display: 'inline-block', scale: vidZoom, translate: `${vidOffset[0]}px ${vidOffset[1]}px`, width: '100%' }}
-					onWheel={(e) => {
-						if (e.ctrlKey) {
-							let newVal = vidZoom;   
-							if (e.nativeEvent.wheelDeltaY > 0) {
-								newVal = Math.min(10.0, vidZoom + 1);
-							} else {
-								newVal = Math.max(1.0, vidZoom - 1);
-								if (newVal === 1) {
-									setVidOffset([0, 0]);
-								}
-							}
-							setVidZoom(newVal);
-						}
-					}}
-					onContextMenu={(e) => e.preventDefault()}
-					onMouseMove={(e) => { if (e.shiftKey) setVidOffset(([x, y]) => ([x + e.movementX, y + e.movementY]))}}
-				></video>}
+				<VideoElement
+					setCurrentTime={setCurrentTime}
+					setVidOffset={setVidOffset}
+					setVidZoom={setVidZoom}
+					vidOffset={vidOffset}
+					vidSrc={vidSrc}
+					vidZoom={vidZoom}
+				/>
 				{!vidSrc && <input type="file" onChange={(e) => {
 					const url = URL.createObjectURL(e.target.files[0]);
 					setVidSrc(url);
