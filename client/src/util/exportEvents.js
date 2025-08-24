@@ -23,7 +23,7 @@ export default async function exportEvents(ev, year, month, day, walkIdx) {
 	});
 	if (invalidEvents.length > 0) {
 		alert(`Invalid events detected, failed to save: ${JSON.stringify(invalidEvents, null, '  ')}`);
-		return;
+		return false;
 	}
 
 	if (ev.ctrlKey) {
@@ -34,6 +34,8 @@ export default async function exportEvents(ev, year, month, day, walkIdx) {
 			alert(`Updated ${year}-${month}-${day} walk ${walkIdx}`);
 		} catch (e) {
 			alert(`Failed to update ${year}-${month}-${day} walk ${walkIdx}`);
+			return false;
 		}
 	}
+	return true;
 }
