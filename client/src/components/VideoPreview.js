@@ -41,7 +41,7 @@ export default function VideoPreview({ revert }) {
 					vidSrc={vidSrc}
 					vidZoom={vidZoom}
 				/>
-				{!vidSrc && <input type="file" onChange={(e) => {
+				{!vidSrc && <input accept=".mp4" type="file" onChange={(e) => {
 					const url = URL.createObjectURL(e.target.files[0]);
 					setVidSrc(url);
 				}}></input>}
