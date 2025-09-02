@@ -92,8 +92,8 @@ export default function EventInputs({ year, month, day, walks, walkIdx, revert, 
           </div>
           <div id="eventInputs" style={{ width: '100%' }}>
             {!events.length && <div style={{ textAlign: 'center', margin: '1em 0' }}>
-                  <button onClick={() => addEvent(walkIdx, 0, false)}>Add event</button>
-                </div>}
+              <button onClick={() => addEvent(walkIdx, 0, false)}>Add event</button>
+            </div>}
             {(events.length && events.map((e, idx) => (
               <div
                 className="event"
