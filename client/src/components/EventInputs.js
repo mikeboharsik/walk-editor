@@ -185,8 +185,7 @@ export default function EventInputs({ year, month, day, walks, walkIdx, revert, 
               </div>
             ))) || null}
             {events.length ? <button onClick={async (ev) => {
-              const success = await exportEvents(ev, year, month, day, walkIdx);
-              if (success) window.location.reload();
+              await exportEvents(ev, year, month, day, walkIdx);
             }}>Submit</button> : null}
           </div>
         </div>
