@@ -80,9 +80,9 @@ export default function EventInputs({ year, month, day, walks, walkIdx, revert, 
         </div>
         <div style={{ width: '20%', borderLeft: '1px solid gray', height: '100vh', overflow: 'scroll' }}>
           <div style={{ display: 'flex', justifyContent: 'space-evenly' }}>
-            {(walks?.length > 1 && walks.map((_, idx) => (
+            {(walks?.length > 1 && walks.map((walk, idx) => (
               <span
-                key={_.events?.at(0)?.id}
+                key={walk.events?.at(0)?.id}
                 style={idx === walkIdx ? { fontWeight: 'bold' } : { cursor: 'pointer' }}
                 onClick={() => setSelectedWalk(idx)}
               >
@@ -94,13 +94,13 @@ export default function EventInputs({ year, month, day, walks, walkIdx, revert, 
             {!events.length && <div style={{ textAlign: 'center', margin: '1em 0' }}>
               <button onClick={() => addEvent(walkIdx, 0, false)}>Add event</button>
             </div>}
-            {(events.length && events.map((e, idx) => (
+            {(events.length && events.map((walkEvent, idx) => (
               <div
                 className="event"
                 style={{ textAlign: 'left', fontSize: '18px', padding: '0 1em' }}
-                key={e.id}
+                key={walkEvent.id}
               >
-                <div title={`Mark: ${e.mark}`}>
+                <div title={`Mark: ${walkEvent.mark}`}>
                   Trimmed start:
                   <input
                     onClick={handleTrimmedStartClick}
@@ -108,44 +108,75 @@ export default function EventInputs({ year, month, day, walks, walkIdx, revert, 
                     className="trimmedStart"
                     style={{ textAlign: 'center', width: '6.2em' }}
                     type="text"
-                    defaultValue={e.trimmedStart}
+                    defaultValue={walkEvent.trimmedStart}
                   ></input>
                 </div>
 
-                <div title={`${idx} - ${e.id}`}>
-                  <span onClick={() => { window.open(`https://www.google.com/maps/place/${e.coords[0]},${e.coords[1]}`, '_blank') }}>
+                <div title={`${idx} - ${walkEvent.id}`}>
+                  <span onClick={() => { window.open(`https://www.google.com/maps/place/${walkEvent.coords[0]},${walkEvent.coords[1]}`, '_blank') }}>
                     Name:
                   </span>
-                  <input disabled={e.tags} onChange={(e) => { detectDelete(e, walkIdx, idx); backupEvents(); }} className="name" type="text" defaultValue={e.name}></input>
+                  <input
+                    disabled={walkEvent.tags}
+                    onChange={(ev) => {
+                      detectDelete(ev, walkIdx, idx);
+                      backupEvents();
+                    }}
+                    className="name"
+                    type="text"
+                    defaultValue={walkEvent.name}
+                  ></input>
                 </div>
 
                 <div>
-                  Trimmed end: <input className="trimmedEnd" onChange={() => backupEvents()} style={{ textAlign: 'center', width: '6.2em' }} type="text" defaultValue={e.trimmedEnd}></input>
+                  Trimmed end:
+                  <input
+                    className="trimmedEnd"
+                    onChange={() => backupEvents()}
+                    style={{ textAlign: 'center', width: '6.2em' }}
+                    type="text"
+                    defaultValue={walkEvent.trimmedEnd}
+                  ></input>
                 </div>
 
                 <div>
-                  <input className="coords" type="hidden" defaultValue={e.coords}></input>
+                  <input className="coords" type="hidden" defaultValue={walkEvent.coords}></input>
                 </div>
 
                 <div>
-                  <input className="mark" type="hidden" defaultValue={e.mark}></input>
+                  <input className="mark" type="hidden" defaultValue={walkEvent.mark}></input>
                 </div>
 
                 <div>
-                  <input className="id" type="hidden" defaultValue={e.id}></input>
+                  <input className="id" type="hidden" defaultValue={walkEvent.id}></input>
                 </div>
 
                 <div>
-                  <PlateInputs backupEvents={backupEvents} plates={((!e.tags || e.tags.length === 0) && e.plates) || []} />
+                  <PlateInputs
+                    backupEvents={backupEvents}
+                    plates={((!walkEvent.tags || walkEvent.tags.length === 0) && walkEvent.plates) || []}
+                  />
                 </div>
 
                 <div>
-                  Skip: <input className="skip" type="checkbox" onChange={() => backupEvents()} defaultChecked={e.skip === true}></input>
-                  Resi: <input className="resi" type="checkbox" onChange={() => backupEvents()} defaultChecked={e.resi === true}></input>
+                  Skip:
+                  <input
+                    className="skip"
+                    type="checkbox"
+                    onChange={() => backupEvents()}
+                    defaultChecked={walkEvent.skip === true}
+                  ></input>
+                  Resi:
+                  <input 
+                    className="resi"
+                    type="checkbox"
+                    onChange={() => backupEvents()}
+                    defaultChecked={walkEvent.resi === true}
+                  ></input>
                 </div>
 
                 <div>
-                  <TagInputs backupEvents={backupEvents} tags={e.tags} />
+                  <TagInputs backupEvents={backupEvents} tags={walkEvent.tags} />
                 </div>
                 
                 <div style={{ textAlign: 'center', margin: '1em 0' }}>
