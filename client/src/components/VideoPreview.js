@@ -59,7 +59,7 @@ export default function VideoPreview({ revert }) {
 					<div>
 						<input onKeyDown={(e) => e.key === 'Enter' && jumpToTime()} type="text" id="jump-to-time" defaultValue={'00:00:00'}></input>
 					</div>
-					<div>
+					<div style={{ marginBottom: '2.75em' }}>
 						<button onClick={() => document.querySelector('#wip-video').currentTime -= 1.0}>{'<-'}</button>
 						<button onClick={() => document.querySelector('#wip-video').currentTime -= (1 / 59.94)}>{'<'}</button>
 						<input type="text" value={currentTimeToTimestamp(currentTime)} readOnly></input>

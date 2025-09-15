@@ -8,29 +8,10 @@ import EventInputs from './components/EventInputs';
 
 function App() {
   const [years, setYears] = useState(null);
-  const [dateData, setDateData] = useState(null);
 
   const [selectedYear, setSelectedYear] = useState(localStorage.getItem('selectedYear') ?? null);
   const [selectedMonth, setSelectedMonth] = useState(localStorage.getItem('selectedMonth') ?? null);
   const [selectedDay, setSelectedDay] = useState(localStorage.getItem('selectedDay') ?? null);
-  const [selectedWalk, setSelectedWalk] = useState(localStorage.getItem('selectedWalk') ?? 0);
-
-  if (!window.restoreBackup) {
-    window.restoreBackup = () => {
-      const backup = localStorage.getItem('backup');
-      if (!backup) {
-        return alert('No backup to restore');
-      }
-      setDateData([{ events: JSON.parse(backup) }]);
-    };
-  }
-
-  const loadWalkData = useCallback(async () => {
-    await fetch(`${baseUrl}/date/${selectedYear}-${selectedMonth}-${selectedDay}`, { headers: { 'cache-control': 'no-cache' } })
-      .then(r => r.json())
-      .then(r => setDateData(r))
-      .catch((e) => { console.error(e); localStorage.removeItem('selectedDay'); window.location.reload(); });
-  }, [selectedYear, selectedMonth, selectedDay]);
 
   useEffect(() => {
     const handleWheel = (event) => {
@@ -52,19 +33,12 @@ function App() {
       .then(r => setYears(r));
   }, [setYears]);
 
-  useEffect(() => {
-    if (selectedDay) {
-      loadWalkData();
-    }
-  }, [loadWalkData, selectedDay]);
-
   if (!years) {
     return null;
   }
 
   return (
     <div className="App" onWheel={(e) => { if (e.ctrlKey) e.preventDefault() } }>
-      <title>{`${selectedYear}${selectedMonth ? '-' + selectedMonth : ''}${selectedDay ? '-' + selectedDay : ''}${selectedDay ? ' ' + selectedWalk : ''}`}</title>
       <header className="App-header">
         <DateComponentSelector
           isVisible={selectedYear === null && years}
@@ -87,12 +61,7 @@ function App() {
           year={selectedYear}
           month={selectedMonth}
           day={selectedDay}
-          walks={dateData}
-          updateWalks={setDateData}
-          walkIdx={selectedWalk}
-          setSelectedWalk={setSelectedWalk}
           revert={() => { setSelectedDay(null); localStorage.removeItem('selectedDay'); }}
-          loadWalkData={loadWalkData}
         />
       </header>
     </div>
