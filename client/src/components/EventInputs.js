@@ -74,10 +74,10 @@ export default function EventInputs({ year, month, day, revert }) {
   }, [year, month, day, walks]);
 
   useEffect(() => {
-    if (walks === null && year && month && day) {
+    if (year && month && day) {
       initializeWalkData({ year, month, day, setWalks });
     }
-  }, [year, month, day, setWalks, walks]);
+  }, [year, month, day, setWalks]);
 
   useEffect(() => {
     if (localStorage.getItem('jumpToMark') !== 'true') return;
@@ -112,6 +112,13 @@ export default function EventInputs({ year, month, day, revert }) {
     } else {
       walk.events = walk.events.toSpliced(eventIdx + 1, 0, newEvent);
     }
+    const updatedWalks = [...walks];
+    setWalks(updatedWalks);
+    writeWalks();
+  }, [setWalks, walks, writeWalks]);
+
+  const deleteEvent = useCallback((walkIdx, eventIdx) => {
+    walks[walkIdx].events = walks[walkIdx].events.toSpliced(eventIdx, 1);
     const updatedWalks = [...walks];
     setWalks(updatedWalks);
     writeWalks();
@@ -202,7 +209,19 @@ export default function EventInputs({ year, month, day, revert }) {
               }}>
                 Revert
               </button>
+              <div style={{ fontSize: '18px', marginTop: '2em' }}>
+                <div>
+                  Jump to mark: <input type="checkbox" defaultChecked={localStorage.getItem('jumpToMark') === 'true'} onChange={(ev) => localStorage.setItem('jumpToMark', ev.target.checked)} />
+                </div>
+                <div>
+                  Offset: <input type="text" defaultValue={eventOffset} onChange={(ev) => setEventOffset(ev.target.value)}></input>
+                </div>
+              </div>
+              {events.length ? <div><button onClick={async (ev) => {
+                await exportEvents(ev, year, month, day, walkIdx, walks[walkIdx].events);
+              }}>Submit</button></div> : null}
             </div>
+            <hr />
             <div style={{ textAlign: 'center', margin: '1em 0' }}>
               <button onClick={() => addEvent(walkIdx, 0, true)}>Add event before</button>
             </div>
@@ -215,6 +234,9 @@ export default function EventInputs({ year, month, day, revert }) {
             </div>
             <div style={{ fontSize: '18px', marginTop: '1em' }}>
               Mark: {millisecondsToTimespan(walkEvent.mark)}
+            </div>
+            <div>
+              <button onClick={() => deleteEvent(walkIdx, eventIdx)}>Delete event</button>
             </div>
             <div
               className="event"
@@ -293,17 +315,6 @@ export default function EventInputs({ year, month, day, revert }) {
               
               <div style={{ textAlign: 'center', margin: '1em 0' }}>
                 <button onClick={() => addEvent(walkIdx, eventIdx, false)}>Add event after</button>
-              </div>
-            </div>
-            {events.length ? <div><button onClick={async (ev) => {
-              await exportEvents(ev, year, month, day, walkIdx, walks[walkIdx].events);
-            }}>Submit</button></div> : null}
-            <div style={{ fontSize: '18px', marginTop: '2em' }}>
-              <div>
-                Jump to mark: <input type="checkbox" defaultChecked={localStorage.getItem('jumpToMark') === 'true'} onChange={(ev) => localStorage.setItem('jumpToMark', ev.target.checked)} />
-              </div>
-              <div>
-                Offset: <input type="text" defaultValue={eventOffset} onChange={(ev) => setEventOffset(ev.target.value)}></input>
               </div>
             </div>
           </div>
