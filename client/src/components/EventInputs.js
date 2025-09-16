@@ -65,6 +65,7 @@ export default function EventInputs({ year, month, day, revert }) {
   const [walks, setWalks] = useState(null);
   const [walkIdx, setWalkIdx] = useState(loadIntFromLocalStorage(`${year}-${month}-${day}-walkIdx`));
   const [eventIdx, setEventIdx] = useState(loadIntFromLocalStorage(`${year}-${month}-${day}-eventIdx`));
+  const [eventOffset, setEventOffset] = useState('-00:00:10.000');
 
   const writeWalks = useCallback(() => {
     const ymd = `${year}-${month}-${day}`;
@@ -78,6 +79,18 @@ export default function EventInputs({ year, month, day, revert }) {
     }
   }, [year, month, day, setWalks, walks]);
 
+  useEffect(() => {
+    if (localStorage.getItem('jumpToMark') !== 'true') return;
+    const player = document.querySelector('#wip-video');
+    if (player) {
+      const event = walks[walkIdx].events[eventIdx];
+      if (event && event.mark) {
+        const markMilliseconds = event.mark;
+        player.currentTime = (markMilliseconds / 1000) + (timespanToMilliseconds(eventOffset) / 1000);
+      }
+    }
+  }, [eventIdx, eventOffset, walks, walkIdx]);
+
   const addEvent = useCallback((walkIdx, eventIdx, before) => {
     const player = document.querySelector('#wip-video');
     if (!player) {
@@ -87,7 +100,6 @@ export default function EventInputs({ year, month, day, revert }) {
     const currentVideoTime = currentTimeToTimestamp(player.currentTime);
     const walk = walks[walkIdx];
     const newEvent = { id: crypto.randomUUID(), trimmedStart: timespanToMilliseconds(currentVideoTime), plates: [], coords: undefined };
-    console.log({ walkIdx, eventIdx, before });
     if (walk.events.length === 0) {
       walk.events = [];
     }
@@ -201,12 +213,15 @@ export default function EventInputs({ year, month, day, revert }) {
               </div>
               <button style={{ cursor: 'pointer', userSelect: 'none', opacity: eventIdx < events.length - 1 ? '1' : '0', pointerEvents: eventIdx < events.length - 1 ? 'all' : 'none'  }} onClick={(ev) => changeEvent(ev, 1)}>{'→'}</button>
             </div>
+            <div style={{ fontSize: '18px', marginTop: '1em' }}>
+              Mark: {millisecondsToTimespan(walkEvent.mark)}
+            </div>
             <div
               className="event"
               style={{ textAlign: 'left', fontSize: '18px', marginTop: '1em', padding: '0 1em' }}
               key={walkEvent.id}
             >
-              <div title={`Mark: ${millisecondsToTimespan(walkEvent.mark)}`}>
+              <div>
                 Trimmed start:
                 <input
                   onClick={handleTrimmedStartClick}
@@ -280,9 +295,17 @@ export default function EventInputs({ year, month, day, revert }) {
                 <button onClick={() => addEvent(walkIdx, eventIdx, false)}>Add event after</button>
               </div>
             </div>
-            {events.length ? <button onClick={async (ev) => {
+            {events.length ? <div><button onClick={async (ev) => {
               await exportEvents(ev, year, month, day, walkIdx, walks[walkIdx].events);
-            }}>Submit</button> : null}
+            }}>Submit</button></div> : null}
+            <div style={{ fontSize: '18px', marginTop: '2em' }}>
+              <div>
+                Jump to mark: <input type="checkbox" defaultChecked={localStorage.getItem('jumpToMark') === 'true'} onChange={(ev) => localStorage.setItem('jumpToMark', ev.target.checked)} />
+              </div>
+              <div>
+                Offset: <input type="text" defaultValue={eventOffset} onChange={(ev) => setEventOffset(ev.target.value)}></input>
+              </div>
+            </div>
           </div>
         </div>
       </div>
