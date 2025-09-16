@@ -63,7 +63,7 @@ const states = [
 	"?",
 ];
 
-function PlateStateInput({ backupEvents, defaultValue = 'MA', eventId, idx, onPlateStateUpdate }) {
+function PlateStateInput({ defaultValue = 'MA', eventId, idx, onPlateStateUpdate }) {
 	return (
 		<select
 			className="plate-state"
@@ -134,5 +134,17 @@ export default function PlateInputs({ backupEvents, eventId, plates, onPlateUpda
 			</div>
 		);
 	}
-	return <div>No plates <span onClick={() => setUpdatedPlates(e => { const updated = [...e, { state: 'MA',  value: '' }]; onPlateUpdate(internalToFinal(updated)); return updated; })}>{'+'}</span></div>;
+	return (
+		<div>
+			<span
+				onClick={() => setUpdatedPlates(e => {
+					const updated = [...e, { state: 'MA',  value: '' }];
+					onPlateUpdate(internalToFinal(updated));
+					return updated;
+				})}
+			>
+				{'+'}
+			</span>
+		</div>
+	);
 }

@@ -10,7 +10,7 @@ function jumpToTime() {
   document.querySelector('#wip-video').currentTime = timestampToCurrentTime(targetTime);
 }
 
-export default function VideoPreview({ revert }) {
+export default function VideoPreview({ revert, handleCurrentTimeClick }) {
 	const [vidSrc, setVidSrc] = useState(null);
 	const [vidZoom, setVidZoom] = useState(1.0);
 	const [vidOffset, setVidOffset] = useState([0, 0]);
@@ -62,7 +62,7 @@ export default function VideoPreview({ revert }) {
 					<div style={{ marginBottom: '2.75em' }}>
 						<button onClick={() => document.querySelector('#wip-video').currentTime -= 1.0}>{'<-'}</button>
 						<button onClick={() => document.querySelector('#wip-video').currentTime -= (1 / 59.94)}>{'<'}</button>
-						<input type="text" value={currentTimeToTimestamp(currentTime)} readOnly></input>
+						<input type="text" value={currentTimeToTimestamp(currentTime)} readOnly onClick={handleCurrentTimeClick}></input>
 						<button onClick={() => document.querySelector('#wip-video').currentTime += (1 / 59.94)}>{'>'}</button>
 						<button onClick={() => document.querySelector('#wip-video').currentTime += 1.0}>{'->'}</button>
 					</div>

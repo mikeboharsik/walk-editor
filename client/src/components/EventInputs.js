@@ -11,19 +11,6 @@ import millisecondsToTimespan from '../util/millisecondsToTimespan';
 import initializeWalkData, { dateWalksPrefix } from '../util/initializeWalkData';
 import exportEvents from '../util/exportEvents';
 
-function handleTrimmedStartClick(e) {
-	const player = document.querySelector('#wip-video');
-	if (player) {
-		const newTime = timestampToCurrentTime(e.target.value);
-		if (e.ctrlKey) {
-			player.currentTime = newTime - 10; // assume it's off by 10 seconds
-		}
-		if (e.altKey) {
-			player.currentTime = newTime;
-		}
-	}
-}
-
 function TagInputs({ tags, onTagUpdate }) {
 	const [updatedTags, setUpdatedTags] = useState(tags);
 	if (updatedTags?.length) {
@@ -84,9 +71,9 @@ export default function EventInputs({ year, month, day, revert }) {
     const player = document.querySelector('#wip-video');
     if (player) {
       const event = walks[walkIdx].events[eventIdx];
-      if (event && event.mark) {
-        const markMilliseconds = event.mark;
-        player.currentTime = (markMilliseconds / 1000) + (timespanToMilliseconds(eventOffset) / 1000);
+      if (event && (event.mark || event.start)) {
+        const markMilliseconds = event.start || event.mark;
+        player.currentTime = (markMilliseconds / 1000) + (event.start ? 0 : (timespanToMilliseconds(eventOffset) / 1000));
       }
     }
   }, [eventIdx, eventOffset, walks, walkIdx]);
@@ -173,16 +160,41 @@ export default function EventInputs({ year, month, day, revert }) {
     });
   };
 
+  function handleStartOrEndClick(e) {
+    try {
+      const player = document.querySelector('#wip-video');
+      if (player) {
+        const newTime = timestampToCurrentTime(e.target.value);
+        if (e.ctrlKey) {
+          player.currentTime = newTime - 10; // assume it's off by 10 seconds
+        }
+        if (e.altKey) {
+          player.currentTime = newTime;
+        }
+      }
+    } catch {}
+  }
+
+  const handleCurrentTimeClick = (ev) => {
+    if (ev.ctrlKey) {
+      updateTimestamp('start', ev.target.value);
+    } else if (ev.altKey) {
+      updateTimestamp('end', ev.target.value);
+    }
+    setWalks(w => [...w]);
+  };
+
   if (year && month && day && walks) {
     const { events } = walks[walkIdx];
     let walkEvent = events[eventIdx];
+    if (!walkEvent) return null;
     return (
       <div style={{ display: 'flex', width: '100%' }}>
         <title>{`${year}${month ? '-' + month : ''}${day ? '-' + day : ''}${day ? ' ' + walkIdx : ''}`}</title>
-        <div style={{ width: '88%' }}>
-          <VideoPreview revert={revert} />
+        <div style={{ width: '85%' }}>
+          <VideoPreview revert={revert} handleCurrentTimeClick={handleCurrentTimeClick} />
         </div>
-        <div style={{ width: '12%', borderLeft: '1px solid gray', height: '100vh', overflow: 'scroll' }}>
+        <div style={{ width: '15%', borderLeft: '1px solid gray', height: '100vh', overflow: 'scroll' }}>
           {(walks?.length > 1 && (
             <div style={{ display: 'flex', justifyContent: 'space-evenly' }}>
               {walks.map((walk, idx) => (
@@ -209,7 +221,7 @@ export default function EventInputs({ year, month, day, revert }) {
               }}>
                 Revert
               </button>
-              <div style={{ fontSize: '18px', marginTop: '2em' }}>
+              <div style={{ fontSize: '18px', marginTop: '0.5em' }}>
                 <div>
                   Jump to mark: <input type="checkbox" defaultChecked={localStorage.getItem('jumpToMark') === 'true'} onChange={(ev) => localStorage.setItem('jumpToMark', ev.target.checked)} />
                 </div>
@@ -221,8 +233,10 @@ export default function EventInputs({ year, month, day, revert }) {
                 await exportEvents(ev, year, month, day, walkIdx, walks[walkIdx].events);
               }}>Submit</button></div> : null}
             </div>
+            
             <hr />
-            <div style={{ textAlign: 'center', margin: '1em 0' }}>
+
+            <div style={{ textAlign: 'center', marginBottom: '1em' }}>
               <button onClick={() => addEvent(walkIdx, 0, true)}>Add event before</button>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-evenly' }}>
@@ -244,22 +258,22 @@ export default function EventInputs({ year, month, day, revert }) {
               key={walkEvent.id}
             >
               <div>
-                Trimmed start:
+                Start&nbsp;&nbsp;
                 <input
-                  onClick={handleTrimmedStartClick}
-                  onChange={(ev) => { updateTimestamp('trimmedStart', ev.target.value) }}
-                  className="trimmedStart"
-                  style={{ textAlign: 'center', width: '6.2em' }}
+                  onClick={handleStartOrEndClick}
+                  onChange={(ev) => { updateTimestamp('start', ev.target.value) }}
+                  style={{ textAlign: 'center', marginLeft: '1em', width: '6.2em' }}
                   type="text"
-                  defaultValue={millisecondsToTimespan(walkEvent.trimmedStart)}
+                  defaultValue={millisecondsToTimespan(walkEvent.start)}
                 ></input>
               </div>
 
-              <div title={`${eventIdx} - ${walkEvent.id}`}>
+              <div style={{ marginTop: '0.5em' }} title={`${eventIdx} - ${walkEvent.id}`}>
                 <span onClick={() => { window.open(`https://www.google.com/maps/place/${walkEvent.coords[0]},${walkEvent.coords[1]}`, '_blank') }}>
-                  Name:
+                  Name
                 </span>
                 <input
+                  style={{ marginLeft: '1em' }}
                   disabled={walkEvent.tags}
                   onChange={(ev) => updateText('name', ev.target.value)}
                   className="name"
@@ -268,20 +282,20 @@ export default function EventInputs({ year, month, day, revert }) {
                 ></input>
               </div>
 
-              <div>
-                Trimmed end:
+              <div style={{ marginTop: '0.5em' }}>
+                End&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
                 <input
-                  className="trimmedEnd"
-                  onChange={(ev) => { updateTimestamp('trimmedEnd', ev.target.value) }}
-                  style={{ textAlign: 'center', width: '6.2em' }}
+                  onClick={handleStartOrEndClick}
+                  onChange={(ev) => { updateTimestamp('end', ev.target.value) }}
+                  style={{ textAlign: 'center', marginleft: '1em', width: '6.2em' }}
                   type="text"
-                  defaultValue={walkEvent.trimmedEnd}
+                  defaultValue={millisecondsToTimespan(walkEvent.end)}
                 ></input>
               </div>
 
-              <div style={{ marginTop: '1em' }}>
+              <div style={{ marginTop: '1em', textAlign: 'center' }}>
+                Plates
                 <PlateInputs
-                  backupEvents={writeWalks}
                   eventId={walkEvent.id}
                   onPlateUpdate={(updated) => { walkEvent.plates = updated; writeWalks(); }}
                   plates={((!walkEvent.tags || walkEvent.tags.length === 0) && walkEvent.plates) || []}
