@@ -178,10 +178,11 @@ export default function EventInputs({ year, month, day, revert }) {
   const handleCurrentTimeClick = (ev) => {
     if (ev.ctrlKey) {
       updateTimestamp('start', ev.target.value);
+      setWalks(w => [...w]);
     } else if (ev.altKey) {
       updateTimestamp('end', ev.target.value);
+      setWalks(w => [...w]);
     }
-    setWalks(w => [...w]);
   };
 
   if (year && month && day && walks) {
