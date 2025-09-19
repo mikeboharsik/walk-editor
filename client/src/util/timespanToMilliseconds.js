@@ -7,7 +7,7 @@ export default function timespanToMilliseconds(timespan) {
 		} else {
 			return val;
 		}
-	} catch {
-		return null;
+	} catch (e) {
+		return undefined;
 	}
 }

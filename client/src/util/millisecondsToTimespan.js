@@ -1,6 +1,6 @@
 export default function millisecondsToTimespan(ms) {
 	try {
-		if (!ms) return null;
+		if (!ms) return undefined;
 		const totalHours = ms / 1000 / 60 / 60;
 		const hours = Math.floor(totalHours).toString().padStart(2, '0');
 		const totalMinutes = ms / 1000 / 60;
@@ -9,6 +9,6 @@ export default function millisecondsToTimespan(ms) {
 		const milliseconds = (ms % 1000).toString().padStart(3, '0');
 		return `${ms < 0 ? '-' : ''}${hours}:${minutes}:${seconds}.${milliseconds}`;
 	} catch {
-		return null;
+		return undefined;
 	}
 }

@@ -66,10 +66,8 @@ const states = [
 function PlateStateInput({ defaultValue = 'MA', eventId, idx, onPlateStateUpdate }) {
 	return (
 		<select
-			className="plate-state"
 			defaultValue={defaultValue}
 			onChange={onPlateStateUpdate}
-			id={`${eventId}-plates-${idx}`}
 		>
 			{states.map(e => <option key={e} value={e}>{e}</option>)}
 		</select>
@@ -91,7 +89,7 @@ export default function PlateInputs({ backupEvents, eventId, plates, onPlateUpda
 						<div style={{ display: 'flex', flexDirection: 'row' }} className="plate">
 							<PlateStateInput
 								backupEvents={backupEvents}
-								defaultValue={e.state}
+								value={e.state}
 								eventId={eventId}
 								idx={idx}
 								onPlateStateUpdate={(ev) => setUpdatedPlates(p => {
@@ -113,7 +111,7 @@ export default function PlateInputs({ backupEvents, eventId, plates, onPlateUpda
 								}}
 								className="plate-value"
 								type="text"
-								defaultValue={e.value}
+								value={e.value}
 							>
 							</input>
 							<button onClick={() => {

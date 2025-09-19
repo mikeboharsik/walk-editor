@@ -10,7 +10,7 @@ function jumpToTime() {
   document.querySelector('#wip-video').currentTime = timestampToCurrentTime(targetTime);
 }
 
-export default function VideoPreview({ revert, handleCurrentTimeClick }) {
+export default function VideoPreview({ revert, handleCurrentTimeClick, handleVideoLoaded }) {
 	const [vidSrc, setVidSrc] = useState(null);
 	const [vidZoom, setVidZoom] = useState(1.0);
 	const [vidOffset, setVidOffset] = useState([0, 0]);
@@ -44,6 +44,7 @@ export default function VideoPreview({ revert, handleCurrentTimeClick }) {
 				{!vidSrc && <input accept=".mp4" type="file" onChange={(e) => {
 					const url = URL.createObjectURL(e.target.files[0]);
 					setVidSrc(url);
+					handleVideoLoaded();
 				}}></input>}
 
 				<div
@@ -61,9 +62,9 @@ export default function VideoPreview({ revert, handleCurrentTimeClick }) {
 					</div>
 					<div style={{ marginBottom: '2.75em' }}>
 						<button onClick={() => document.querySelector('#wip-video').currentTime -= 1.0}>{'<-'}</button>
-						<button onClick={() => document.querySelector('#wip-video').currentTime -= (1 / 59.94)}>{'<'}</button>
+						<button onClick={() => document.querySelector('#wip-video').currentTime -= (1 / 29.97)}>{'<'}</button>
 						<input type="text" value={currentTimeToTimestamp(currentTime)} readOnly onClick={handleCurrentTimeClick}></input>
-						<button onClick={() => document.querySelector('#wip-video').currentTime += (1 / 59.94)}>{'>'}</button>
+						<button onClick={() => document.querySelector('#wip-video').currentTime += (1 / 29.97)}>{'>'}</button>
 						<button onClick={() => document.querySelector('#wip-video').currentTime += 1.0}>{'->'}</button>
 					</div>
 				</div>

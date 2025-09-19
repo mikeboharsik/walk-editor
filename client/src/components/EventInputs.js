@@ -8,42 +8,45 @@ import timestampToCurrentTime from '../util/timestampToCurrentTime';
 import timespanToMilliseconds from '../util/timespanToMilliseconds';
 import millisecondsToTimespan from '../util/millisecondsToTimespan';
 
-import initializeWalkData, { dateWalksPrefix } from '../util/initializeWalkData';
+import getWalkData, { dateWalksPrefix } from '../util/getWalkData';
 import exportEvents from '../util/exportEvents';
 
 function TagInputs({ tags, onTagUpdate }) {
-	const [updatedTags, setUpdatedTags] = useState(tags);
-	if (updatedTags?.length) {
-		return (
-			<div>
-				{updatedTags.map((e, idx, arr) => (
-					<div key={e} className="tag">
-						<input
-              onChange={(ev) => {
-                setUpdatedTags(t => {
-                  t[idx] = ev.target.value;
-                  const updated = [...t];
-                  onTagUpdate(updated);
-                  return updated;
-                });
-              }}
-              className="tag-value" 
-              type="text"
-              defaultValue={e}
-            >
-            </input>
-						{idx === arr.length - 1 && <span onClick={() => setUpdatedTags(e => [...e, ''])}>{'+'}</span>}
-					</div>
-				))}
-			</div>
-		);
-	}
+	const [updatedTags, setUpdatedTags] = useState(tags?.map(e => ({ key: crypto.randomUUID(), value: e })) || []);
+  return (
+    <div>
+      {updatedTags.map((e, idx, arr) => (
+        <div key={e.key} className="tag">
+          <input
+            onChange={(ev) => {
+              setUpdatedTags(t => {
+                e.value = ev.target.value;
+                const updated = [...t];
+                onTagUpdate(updated);
+                return updated;
+              });
+            }}
+            className="tag-value" 
+            type="text"
+            value={e.value}
+          >
+          </input>
+          <button onClick={() => { const updated = updatedTags.toSpliced(idx, 1); setUpdatedTags(updated); onTagUpdate(updated); }}>X</button>
+        </div>
+      ))}
+      <span onClick={() => setUpdatedTags(e => [...e, { key: crypto.randomUUID(), value: '' }])}>{'+'}</span>
+    </div>
+  );
 }
 
 function loadIntFromLocalStorage(key, defaultValue = 0) {
   const val = localStorage.getItem(key);
   if (val) {
-    return parseInt(val);
+    const result = parseInt(val);
+    if (isNaN(result)) {
+      return 0;
+    }
+    return result;
   }
   return defaultValue;
 }
@@ -52,7 +55,7 @@ export default function EventInputs({ year, month, day, revert }) {
   const [walks, setWalks] = useState(null);
   const [walkIdx, setWalkIdx] = useState(loadIntFromLocalStorage(`${year}-${month}-${day}-walkIdx`));
   const [eventIdx, setEventIdx] = useState(loadIntFromLocalStorage(`${year}-${month}-${day}-eventIdx`));
-  const [eventOffset, setEventOffset] = useState('-00:00:10.000');
+  const [eventOffset, setEventOffset] = useState(localStorage.getItem('eventOffset') || '-00:00:10.000');
 
   const writeWalks = useCallback(() => {
     const ymd = `${year}-${month}-${day}`;
@@ -62,9 +65,19 @@ export default function EventInputs({ year, month, day, revert }) {
 
   useEffect(() => {
     if (year && month && day) {
-      initializeWalkData({ year, month, day, setWalks });
+      getWalkData(year, month, day)
+        .then(walksForDate => {
+          walksForDate.forEach(walk => {
+            walk.events.forEach(event => {
+              if (event.mark && event.start === undefined) {
+                event.start = event.mark + timespanToMilliseconds(eventOffset);
+              }
+            });
+          });
+          setWalks(walksForDate);
+        });
     }
-  }, [year, month, day, setWalks]);
+  }, [eventOffset, year, month, day, setWalks]);
 
   useEffect(() => {
     if (localStorage.getItem('jumpToMark') !== 'true') return;
@@ -99,66 +112,68 @@ export default function EventInputs({ year, month, day, revert }) {
     } else {
       walk.events = walk.events.toSpliced(eventIdx + 1, 0, newEvent);
     }
-    const updatedWalks = [...walks];
+    const updatedWalks = JSON.parse(JSON.stringify(walks));
     setWalks(updatedWalks);
     writeWalks();
   }, [setWalks, walks, writeWalks]);
 
   const deleteEvent = useCallback((walkIdx, eventIdx) => {
     walks[walkIdx].events = walks[walkIdx].events.toSpliced(eventIdx, 1);
-    const updatedWalks = [...walks];
+    const updatedWalks = JSON.parse(JSON.stringify(walks));
     setWalks(updatedWalks);
     writeWalks();
   }, [setWalks, walks, writeWalks]);
 
-  const updateText = (propName, newName) => {
+  const updateText = useCallback((propName, newName) => {
     walks[walkIdx].events[eventIdx][propName] = newName;
+    setWalks(JSON.parse(JSON.stringify(walks)));
     writeWalks();
-  }
+  }, [eventIdx, setWalks, walks, walkIdx, writeWalks]);
 
-  const updateTimestamp = (propName, newValue) => {
+  const updateTimestamp = useCallback((propName, newValue) => {
     try {
-      walks[walkIdx].events[eventIdx][propName] = timespanToMilliseconds(newValue);
+      walks[walkIdx].events[eventIdx][propName] = typeof newValue === 'string' ? timespanToMilliseconds(newValue) : newValue;
       writeWalks();
+      setWalks(JSON.parse(JSON.stringify(walks)));
     } catch (e) {
       console.error(`Failed to updateTimestamp [${propName}]`, e);
     }
-  }
+  }, [eventIdx, setWalks, walks, walkIdx, writeWalks]);
 
-  const updateCheckbox = (propName, newValue) => {
+  const updateCheckbox = useCallback((propName, newValue) => {
     if (newValue) {
       walks[walkIdx].events[eventIdx][propName] = newValue;
     } else {
       delete walks[walkIdx].events[eventIdx][propName];
     }
     writeWalks();
-  }
+  }, [eventIdx, walks, walkIdx, writeWalks]);
 
-  const changeEvent = (ev, offset) => {
+  const changeEvent = useCallback((ev, offset) => {
     let finalOffset = offset;
+    let finalIdx;
     if (ev) {
       if(ev.shiftKey) {
         finalOffset *= 10;
       } else if (ev.ctrlKey) {
         if (offset < 0) {
-          localStorage.setItem(`${year}-${month}-${day}-eventIdx`, 0);
-          setEventIdx(0);
+          finalIdx = 0;
         } else {
           const val = walks[walkIdx].events.length - 1;
-          localStorage.setItem(`${year}-${month}-${day}-eventIdx`, val);
-          setEventIdx(val);
+          finalIdx = val;
         }
-        return;
       }
     }
     const maxOrMin = offset < 0 ? Math.max : Math.min;
     const maxOrMinLimit = offset < 0 ? 0 : walks[walkIdx].events.length - 1;
     setEventIdx(i => {
-      const finalIdx = maxOrMin(maxOrMinLimit, i + finalOffset);
+      if (finalIdx === undefined) {
+        finalIdx = maxOrMin(maxOrMinLimit, i + finalOffset);
+      }
       localStorage.setItem(`${year}-${month}-${day}-eventIdx`, finalIdx);
       return finalIdx;
     });
-  };
+  }, [day, month, walkIdx, walks, setEventIdx, year]);
 
   function handleStartOrEndClick(e) {
     try {
@@ -175,25 +190,42 @@ export default function EventInputs({ year, month, day, revert }) {
     } catch {}
   }
 
-  const handleCurrentTimeClick = (ev) => {
+  const handleCurrentTimeClick = useCallback((ev) => {
     if (ev.ctrlKey) {
       updateTimestamp('start', ev.target.value);
-      setWalks(w => [...w]);
     } else if (ev.altKey) {
       updateTimestamp('end', ev.target.value);
-      setWalks(w => [...w]);
     }
-  };
+  }, [updateTimestamp]);
+
+  const handleVideoLoaded = useCallback(() => {
+    setTimeout(() => {
+      const player = document.querySelector('#wip-video');
+      if (player) {
+        const event = walks[walkIdx].events[eventIdx];
+        const offsetMs = timespanToMilliseconds(eventOffset);
+        player.currentTime = (event.mark / 1000) + (offsetMs / 1000);
+      }
+    }, 250);
+  }, [eventIdx, eventOffset, walks, walkIdx]);
+
+  const Title = () => <title>{`${year}${month ? '-' + month : ''}${day ? '-' + day : ''}${day ? ' ' + walkIdx : ''}`}</title>;
 
   if (year && month && day && walks) {
     const { events } = walks[walkIdx];
-    let walkEvent = events[eventIdx];
-    if (!walkEvent) return null;
+    const walkEvent = events[eventIdx];
+    if (!walkEvent) {
+      console.log('Failed to walk event', { walks, walkIdx, eventIdx });
+    };
     return (
       <div style={{ display: 'flex', width: '100%' }}>
-        <title>{`${year}${month ? '-' + month : ''}${day ? '-' + day : ''}${day ? ' ' + walkIdx : ''}`}</title>
+        <Title />
         <div style={{ width: '85%' }}>
-          <VideoPreview revert={revert} handleCurrentTimeClick={handleCurrentTimeClick} />
+          <VideoPreview
+            revert={revert}
+            handleCurrentTimeClick={handleCurrentTimeClick}
+            handleVideoLoaded={handleVideoLoaded}
+          />
         </div>
         <div style={{ width: '15%', borderLeft: '1px solid gray', height: '100vh', overflow: 'scroll' }}>
           {(walks?.length > 1 && (
@@ -224,10 +256,20 @@ export default function EventInputs({ year, month, day, revert }) {
               </button>
               <div style={{ fontSize: '18px', marginTop: '0.5em' }}>
                 <div>
-                  Jump to mark: <input type="checkbox" defaultChecked={localStorage.getItem('jumpToMark') === 'true'} onChange={(ev) => localStorage.setItem('jumpToMark', ev.target.checked)} />
+                  Jump to mark:
+                  <input
+                    type="checkbox"
+                    defaultChecked={localStorage.getItem('jumpToMark') === 'true'}
+                    onChange={(ev) => localStorage.setItem('jumpToMark', ev.target.checked)}
+                  />
                 </div>
                 <div>
-                  Offset: <input type="text" defaultValue={eventOffset} onChange={(ev) => setEventOffset(ev.target.value)}></input>
+                  Offset:
+                  <input
+                    type="text"
+                    defaultValue={eventOffset}
+                    onChange={(ev) => setEventOffset(() => { localStorage.setItem('eventOffset', ev.target.value); return ev.target.value; })}
+                  ></input>
                 </div>
               </div>
               {events.length ? <div><button onClick={async (ev) => {
@@ -265,7 +307,7 @@ export default function EventInputs({ year, month, day, revert }) {
                   onChange={(ev) => { updateTimestamp('start', ev.target.value) }}
                   style={{ textAlign: 'center', marginLeft: '1em', width: '6.2em' }}
                   type="text"
-                  defaultValue={millisecondsToTimespan(walkEvent.start)}
+                  value={millisecondsToTimespan(walkEvent.start)}
                 ></input>
               </div>
 
@@ -279,7 +321,7 @@ export default function EventInputs({ year, month, day, revert }) {
                   onChange={(ev) => updateText('name', ev.target.value)}
                   className="name"
                   type="text"
-                  defaultValue={walkEvent.name}
+                  value={walkEvent.name}
                 ></input>
               </div>
 
@@ -290,7 +332,7 @@ export default function EventInputs({ year, month, day, revert }) {
                   onChange={(ev) => { updateTimestamp('end', ev.target.value) }}
                   style={{ textAlign: 'center', marginleft: '1em', width: '6.2em' }}
                   type="text"
-                  defaultValue={millisecondsToTimespan(walkEvent.end)}
+                  value={millisecondsToTimespan(walkEvent.end)}
                 ></input>
               </div>
 
@@ -324,8 +366,13 @@ export default function EventInputs({ year, month, day, revert }) {
                 </div>
               </div>
 
-              <div>
-                <TagInputs backupEvents={writeWalks} onTagUpdate={(updated) => walkEvent.plates = updated} tags={walkEvent.tags} />
+              <div style={{ marginTop: '1em', textAlign: 'center' }}>
+                Tags
+                <TagInputs
+                  backupEvents={writeWalks}
+                  onTagUpdate={(updated) => { walkEvent.tags = updated.map(e => e.value); writeWalks(); }}
+                  tags={walkEvent.tags} 
+                />
               </div>
               
               <div style={{ textAlign: 'center', margin: '1em 0' }}>
