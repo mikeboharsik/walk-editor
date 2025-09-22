@@ -89,6 +89,7 @@ export default function PlateInputs({ backupEvents, eventId, plates, onPlateUpda
 						<div style={{ display: 'flex', flexDirection: 'row' }} className="plate">
 							<PlateStateInput
 								backupEvents={backupEvents}
+								defaultValue={e.state}
 								value={e.state}
 								eventId={eventId}
 								idx={idx}
