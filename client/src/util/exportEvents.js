@@ -8,7 +8,7 @@ export default async function exportEvents(ev, year, month, day, walkIdx, update
 	const eventsForExport = JSON.parse(JSON.stringify(updatedEvents));
 	eventsForExport.forEach(e => {
 		Object.entries(e).forEach(([key, val]) => {
-			if (val === '' && !val) {
+			if (val === '' || !val || val?.length === 0) {
 				delete e[key];
 			}
 		});
