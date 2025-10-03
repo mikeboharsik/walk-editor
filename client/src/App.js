@@ -57,12 +57,12 @@ function App() {
           updateValue={(e) => { setSelectedDay(e); localStorage.setItem('selectedDay', e); }}
           revert={() => { setSelectedMonth(null); localStorage.removeItem('selectedMonth'); }}
         />
-        <EventInputs
+        {selectedYear && selectedMonth && selectedDay ? <EventInputs
           year={selectedYear}
           month={selectedMonth}
           day={selectedDay}
           revert={() => { setSelectedDay(null); localStorage.removeItem('selectedDay'); }}
-        />
+        /> : null}
       </header>
     </div>
   );

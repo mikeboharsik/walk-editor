@@ -44,7 +44,7 @@ function loadIntFromLocalStorage(key, defaultValue = 0) {
   if (val) {
     const result = parseInt(val);
     if (isNaN(result)) {
-      return 0;
+      return defaultValue;
     }
     return result;
   }
