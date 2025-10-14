@@ -69,6 +69,11 @@ export default function EventInputs({ year, month, day, revert }) {
         .then(walksForDate => {
           walksForDate.forEach(walk => {
             walk.events.forEach(event => {
+              if (event.coords[2] && event.start === undefined) {
+                event.start = event.coords[2] - walk.startTime;
+                return;
+              }
+
               if (event.mark && event.start === undefined) {
                 event.start = event.mark + timespanToMilliseconds(eventOffset);
               }
@@ -202,9 +207,14 @@ export default function EventInputs({ year, month, day, revert }) {
     setTimeout(() => {
       const player = document.querySelector('#wip-video');
       if (player) {
-        const event = walks[walkIdx].events[eventIdx];
+        const walk = walks[walkIdx];
+        const event = walk.events[eventIdx];
         const offsetMs = timespanToMilliseconds(eventOffset);
-        player.currentTime = (event.mark / 1000) + (offsetMs / 1000);
+        if (event.coords[2]) {
+          player.currentTime = ((event.coords[2] - walk.startTime) / 1000) + (offsetMs / 1000);  
+        } else {
+          player.currentTime = (event.mark / 1000) + (offsetMs / 1000);
+        }
       }
     }, 250);
   }, [eventIdx, eventOffset, walks, walkIdx]);
