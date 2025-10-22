@@ -88,8 +88,14 @@ export default function EventInputs({ year, month, day, revert }) {
     if (localStorage.getItem('jumpToMark') !== 'true') return;
     const player = document.querySelector('#wip-video');
     if (player) {
-      const event = walks[walkIdx].events[eventIdx];
-      if (event && (event.mark || event.start)) {
+      const walk = walks[walkIdx];
+      const event = walk.events[eventIdx];
+      if (event && (event.mark || event.start || event.coords[2])) {
+        if (event.coords[2]) {
+          player.currentTime = ((event.coords[2] - walk.startTime) / 1000) + (timespanToMilliseconds(eventOffset) / 1000);
+          return;
+        }
+
         const markMilliseconds = event.start || event.mark;
         player.currentTime = (markMilliseconds / 1000) + (event.start ? 0 : (timespanToMilliseconds(eventOffset) / 1000));
       }
@@ -222,7 +228,7 @@ export default function EventInputs({ year, month, day, revert }) {
   const Title = () => <title>{`${year}${month ? '-' + month : ''}${day ? '-' + day : ''}${day ? ' ' + walkIdx : ''}`}</title>;
 
   if (year && month && day && walks) {
-    const { events } = walks[walkIdx];
+    const { events, startTime } = walks[walkIdx];
     const walkEvent = events[eventIdx];
     if (!walkEvent) {
       console.log('Failed to walk event', { walks, walkIdx, eventIdx });
@@ -300,7 +306,7 @@ export default function EventInputs({ year, month, day, revert }) {
               <button style={{ cursor: 'pointer', userSelect: 'none', opacity: eventIdx < events.length - 1 ? '1' : '0', pointerEvents: eventIdx < events.length - 1 ? 'all' : 'none'  }} onClick={(ev) => changeEvent(ev, 1)}>{'→'}</button>
             </div>
             <div style={{ fontSize: '18px', marginTop: '1em' }}>
-              Mark: {millisecondsToTimespan(walkEvent.mark)}
+              Mark: {millisecondsToTimespan(walkEvent.mark || walkEvent.coords?.[2] - startTime)}
             </div>
             <div>
               <button onClick={() => deleteEvent(walkIdx, eventIdx)}>Delete event</button>
