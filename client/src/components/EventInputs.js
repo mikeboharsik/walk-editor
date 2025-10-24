@@ -11,6 +11,29 @@ import millisecondsToTimespan from '../util/millisecondsToTimespan';
 import getWalkData, { dateWalksPrefix } from '../util/getWalkData';
 import exportEvents from '../util/exportEvents';
 
+function setPlayerTime(time) {
+  const player = document.querySelector('#wip-video');
+  if (player) {
+    player.currentTime = time;
+  } else {
+    console.warn(`Attempted to set player time to [${time}] but player is [${player}]`);
+  }
+}
+
+function jumpToEvent(walk, eventIdx, eventOffset, setPlayerTime) {
+  if (localStorage.getItem('jumpToMark') !== 'true') return;
+  const event = walk.events[eventIdx];
+  if (event && (event.mark || event.start || event.coords[2])) {
+    if (event.coords[2]) {
+      setPlayerTime(((event.coords[2] - walk.startTime) / 1000) + (timespanToMilliseconds(eventOffset) / 1000));
+      return;
+    }
+
+    const markMilliseconds = event.start || event.mark;
+    setPlayerTime((markMilliseconds / 1000) + (event.start ? 0 : (timespanToMilliseconds(eventOffset) / 1000)));
+  }
+}
+
 function TagInputs({ tags, onTagUpdate }) {
 	const [updatedTags, setUpdatedTags] = useState(tags?.map(e => ({ key: crypto.randomUUID(), value: e })) || []);
   return (
@@ -84,24 +107,6 @@ export default function EventInputs({ year, month, day, revert }) {
     }
   }, [eventOffset, year, month, day, setWalks]);
 
-  useEffect(() => {
-    if (localStorage.getItem('jumpToMark') !== 'true') return;
-    const player = document.querySelector('#wip-video');
-    if (player) {
-      const walk = walks[walkIdx];
-      const event = walk.events[eventIdx];
-      if (event && (event.mark || event.start || event.coords[2])) {
-        if (event.coords[2]) {
-          player.currentTime = ((event.coords[2] - walk.startTime) / 1000) + (timespanToMilliseconds(eventOffset) / 1000);
-          return;
-        }
-
-        const markMilliseconds = event.start || event.mark;
-        player.currentTime = (markMilliseconds / 1000) + (event.start ? 0 : (timespanToMilliseconds(eventOffset) / 1000));
-      }
-    }
-  }, [eventIdx, eventOffset, walks, walkIdx]);
-
   const addEvent = useCallback((walkIdx, eventIdx, before) => {
     const player = document.querySelector('#wip-video');
     if (!player) {
@@ -141,13 +146,13 @@ export default function EventInputs({ year, month, day, revert }) {
     writeWalks();
   }, [eventIdx, setWalks, walks, walkIdx, writeWalks]);
 
-  const updateTimestamp = useCallback((propName, newValue) => {
+  const setEventProperty = useCallback((propName, newValue) => {
     try {
       walks[walkIdx].events[eventIdx][propName] = typeof newValue === 'string' ? timespanToMilliseconds(newValue) : newValue;
       writeWalks();
       setWalks(JSON.parse(JSON.stringify(walks)));
     } catch (e) {
-      console.error(`Failed to updateTimestamp [${propName}]`, e);
+      console.error(`Failed to setEventProperty [${propName}]`, e);
     }
   }, [eventIdx, setWalks, walks, walkIdx, writeWalks]);
 
@@ -182,45 +187,38 @@ export default function EventInputs({ year, month, day, revert }) {
         finalIdx = maxOrMin(maxOrMinLimit, i + finalOffset);
       }
       localStorage.setItem(`${year}-${month}-${day}-eventIdx`, finalIdx);
+      jumpToEvent(walks[walkIdx], finalIdx, eventOffset, setPlayerTime);
       return finalIdx;
     });
-  }, [day, month, walkIdx, walks, setEventIdx, year]);
+  }, [day, month, walkIdx, walks, setEventIdx, year, eventOffset]);
 
   function handleStartOrEndClick(e) {
-    try {
-      const player = document.querySelector('#wip-video');
-      if (player) {
-        const newTime = timestampToCurrentTime(e.target.value);
-        if (e.ctrlKey) {
-          player.currentTime = newTime - 10; // assume it's off by 10 seconds
-        }
-        if (e.altKey) {
-          player.currentTime = newTime;
-        }
-      }
-    } catch {}
+    const newTime = timestampToCurrentTime(e.target.value);
+    if (e.ctrlKey) {
+      setPlayerTime(newTime - 10); // assume it's off by 10 seconds
+    }
+    if (e.altKey) {
+      setPlayerTime(newTime);
+    }
   }
 
   const handleCurrentTimeClick = useCallback((ev) => {
     if (ev.ctrlKey) {
-      updateTimestamp('start', ev.target.value);
+      setEventProperty('start', ev.target.value);
     } else if (ev.altKey) {
-      updateTimestamp('end', ev.target.value);
+      setEventProperty('end', ev.target.value);
     }
-  }, [updateTimestamp]);
+  }, [setEventProperty]);
 
   const handleVideoLoaded = useCallback(() => {
     setTimeout(() => {
-      const player = document.querySelector('#wip-video');
-      if (player) {
-        const walk = walks[walkIdx];
-        const event = walk.events[eventIdx];
-        const offsetMs = timespanToMilliseconds(eventOffset);
-        if (event.coords[2]) {
-          player.currentTime = ((event.coords[2] - walk.startTime) / 1000) + (offsetMs / 1000);  
-        } else {
-          player.currentTime = (event.mark / 1000) + (offsetMs / 1000);
-        }
+      const walk = walks[walkIdx];
+      const event = walk.events[eventIdx];
+      const offsetMs = timespanToMilliseconds(eventOffset);
+      if (event.coords[2]) {
+        setPlayerTime(((event.coords[2] - walk.startTime) / 1000) + (offsetMs / 1000));
+      } else {
+        setPlayerTime((event.mark / 1000) + (offsetMs / 1000));
       }
     }, 250);
   }, [eventIdx, eventOffset, walks, walkIdx]);
@@ -320,7 +318,7 @@ export default function EventInputs({ year, month, day, revert }) {
                 Start&nbsp;&nbsp;
                 <input
                   onClick={handleStartOrEndClick}
-                  onChange={(ev) => { updateTimestamp('start', ev.target.value) }}
+                  onChange={(ev) => { setEventProperty('start', ev.target.value) }}
                   style={{ textAlign: 'center', marginLeft: '1em', width: '6.2em' }}
                   type="text"
                   value={millisecondsToTimespan(walkEvent.start)}
@@ -345,7 +343,7 @@ export default function EventInputs({ year, month, day, revert }) {
                 End&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
                 <input
                   onClick={handleStartOrEndClick}
-                  onChange={(ev) => { updateTimestamp('end', ev.target.value) }}
+                  onChange={(ev) => { setEventProperty('end', ev.target.value) }}
                   style={{ textAlign: 'center', marginleft: '1em', width: '6.2em' }}
                   type="text"
                   value={millisecondsToTimespan(walkEvent.end)}
