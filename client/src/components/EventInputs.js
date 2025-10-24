@@ -193,12 +193,16 @@ export default function EventInputs({ year, month, day, revert }) {
   }, [day, month, walkIdx, walks, setEventIdx, year, eventOffset]);
 
   function handleStartOrEndClick(e) {
-    const newTime = timestampToCurrentTime(e.target.value);
-    if (e.ctrlKey) {
-      setPlayerTime(newTime - 10); // assume it's off by 10 seconds
-    }
-    if (e.altKey) {
-      setPlayerTime(newTime);
+    try {
+      const newTime = timestampToCurrentTime(e.target.value);
+      if (e.ctrlKey) {
+        setPlayerTime(newTime - 10); // assume it's off by 10 seconds
+      }
+      if (e.altKey) {
+        setPlayerTime(newTime);
+      }
+    } catch (e) {
+      console.warn('Failed to properly handle start or end click', e);
     }
   }
 
