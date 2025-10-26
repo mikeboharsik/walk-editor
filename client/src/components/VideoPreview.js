@@ -42,9 +42,15 @@ export default function VideoPreview({ revert, handleCurrentTimeClick, handleVid
 					vidZoom={vidZoom}
 				/>
 				{!vidSrc && <input accept=".mp4" type="file" onChange={(e) => {
-					const url = URL.createObjectURL(e.target.files[0]);
-					setVidSrc(url);
-					handleVideoLoaded();
+					const [file] = e.target.files;
+					if (file.name.includes('merged')) {
+						const url = URL.createObjectURL(file);
+						setVidSrc(url);
+						handleVideoLoaded();
+					} else {
+						alert('File did not have expected name, please try again');
+						e.target.value = null;
+					}
 				}}></input>}
 
 				<div
