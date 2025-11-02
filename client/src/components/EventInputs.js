@@ -134,11 +134,19 @@ export default function EventInputs({ year, month, day, revert }) {
   }, [setWalks, walks, writeWalks]);
 
   const deleteEvent = useCallback((walkIdx, eventIdx) => {
+    const eventsCount = walks[walkIdx].events.length;
     walks[walkIdx].events = walks[walkIdx].events.toSpliced(eventIdx, 1);
     const updatedWalks = JSON.parse(JSON.stringify(walks));
     setWalks(updatedWalks);
     writeWalks();
-  }, [setWalks, walks, writeWalks]);
+    if (walkIdx === eventsCount - 1) {
+      const finalIdx = walkIdx - 1;
+      localStorage.setItem(`${year}-${month}-${day}-eventIdx`, finalIdx);
+      jumpToEvent(walks[walkIdx], finalIdx, eventOffset, setPlayerTime);
+    } else {
+      jumpToEvent(walks[walkIdx], eventIdx, eventOffset, setPlayerTime);
+    }
+  }, [setWalks, walks, writeWalks, year, month, day, eventOffset]);
 
   const updateText = useCallback((propName, newName) => {
     walks[walkIdx].events[eventIdx][propName] = newName;
