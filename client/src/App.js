@@ -1,10 +1,13 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { baseUrl } from './util/consts';
+import doLocalStorageHousekeeping from './util/doLocalStorageHousekeeping';
 
 import './App.css';
 import DateComponentSelector from './components/DateComponentSelector';
 import EventInputs from './components/EventInputs';
+
+doLocalStorageHousekeeping();
 
 function App() {
   const [years, setYears] = useState(null);

@@ -8,7 +8,8 @@ import timestampToCurrentTime from '../util/timestampToCurrentTime';
 import timespanToMilliseconds from '../util/timespanToMilliseconds';
 import millisecondsToTimespan from '../util/millisecondsToTimespan';
 
-import getWalkData, { dateWalksPrefix } from '../util/getWalkData';
+import { dateWalksPrefix } from '../util/consts';
+import getWalkData from '../util/getWalkData';
 import exportEvents from '../util/exportEvents';
 
 function setPlayerTime(time) {

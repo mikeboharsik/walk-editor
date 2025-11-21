@@ -1,6 +1,4 @@
-import { baseUrl } from './consts';
-
-export const dateWalksPrefix = 'walksForDate-{{date}}';
+import { baseUrl, dateWalksPrefix } from './consts';
 
 export default async function getWalkData(year, month, day) {
 	const ymd = `${year}-${month}-${day}`;
