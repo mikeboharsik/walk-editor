@@ -41,7 +41,7 @@ export default function VideoPreview({ revert, handleCurrentTimeClick, handleVid
 					vidSrc={vidSrc}
 					vidZoom={vidZoom}
 				/>
-				{!vidSrc && <input accept=".mp4" type="file" onChange={(e) => {
+				{!vidSrc && <input accept=".mp4,.webm" type="file" onChange={(e) => {
 					const [file] = e.target.files;
 					if (file.name.includes('merged')) {
 						const url = URL.createObjectURL(file);
