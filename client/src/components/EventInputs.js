@@ -24,9 +24,9 @@ function setPlayerTime(time) {
 function jumpToEvent(walk, eventIdx, eventOffset, setPlayerTime) {
   if (localStorage.getItem('jumpToMark') !== 'true') return;
   const event = walk.events[eventIdx];
-  if (event && (event.mark || event.start || event.coords[2])) {
-    if (event.coords[2]) {
-      setPlayerTime(((event.coords[2] - walk.startTime) / 1000) + (timespanToMilliseconds(eventOffset) / 1000));
+  if (event && (event.mark || event.start || event.timestamp)) {
+    if (event.timestamp) {
+      setPlayerTime(((event.timestamp - walk.startTime) / 1000) + (timespanToMilliseconds(eventOffset) / 1000));
       return;
     }
 
@@ -93,8 +93,8 @@ export default function EventInputs({ year, month, day, revert }) {
         .then(walksForDate => {
           walksForDate.forEach(walk => {
             walk.events.forEach(event => {
-              if (event.coords[2] && event.start === undefined) {
-                event.start = event.coords[2] - walk.startTime;
+              if (event.timestamp && event.start === undefined) {
+                event.start = event.timestamp - walk.startTime;
                 return;
               }
 
@@ -228,8 +228,8 @@ export default function EventInputs({ year, month, day, revert }) {
       const walk = walks[walkIdx];
       const event = walk.events[eventIdx];
       const offsetMs = timespanToMilliseconds(eventOffset);
-      if (event.coords[2]) {
-        setPlayerTime(((event.coords[2] - walk.startTime) / 1000) + (offsetMs / 1000));
+      if (event.timestamp) {
+        setPlayerTime(((event.timestamp - walk.startTime) / 1000) + (offsetMs / 1000));
       } else {
         setPlayerTime((event.mark / 1000) + (offsetMs / 1000));
       }
