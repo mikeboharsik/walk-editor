@@ -317,7 +317,7 @@ export default function EventInputs({ year, month, day, revert }) {
               <button style={{ cursor: 'pointer', userSelect: 'none', opacity: eventIdx < events.length - 1 ? '1' : '0', pointerEvents: eventIdx < events.length - 1 ? 'all' : 'none'  }} onClick={(ev) => changeEvent(ev, 1)}>{'→'}</button>
             </div>
             <div style={{ fontSize: '18px', marginTop: '1em' }}>
-              Mark: {millisecondsToTimespan(walkEvent.mark || walkEvent.coords?.[2] - startTime)}
+              Mark: {millisecondsToTimespan(walkEvent.mark || walkEvent.timestamp - startTime)}
             </div>
             <div>
               <button onClick={() => deleteEvent(walkIdx, eventIdx)}>Delete event</button>
