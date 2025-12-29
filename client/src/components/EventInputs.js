@@ -239,11 +239,9 @@ export default function EventInputs({ year, month, day, revert }) {
   const Title = () => <title>{`${year}${month ? '-' + month : ''}${day ? '-' + day : ''}${day ? ' ' + walkIdx : ''}`}</title>;
 
   if (year && month && day && walks) {
-    const { events, startTime } = walks[walkIdx];
+    const walk = walks[walkIdx];
+    const { events, startTime } = walk;
     const walkEvent = events[eventIdx];
-    if (!walkEvent) {
-      console.log('Failed to walk event', { walks, walkIdx, eventIdx });
-    };
     return (
       <div style={{ display: 'flex', width: '100%' }}>
         <Title />
@@ -307,105 +305,104 @@ export default function EventInputs({ year, month, day, revert }) {
             <hr />
 
             <div style={{ textAlign: 'center', marginBottom: '1em' }}>
-              <button onClick={() => addEvent(walkIdx, 0, true)}>Add event before</button>
+              <button onClick={() => addEvent(walkIdx, 0, true)}>Add event at current time</button>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-evenly' }}>
-              <button style={{ cursor: 'pointer', userSelect: 'none', opacity: eventIdx > 0 ? '1' : '0', pointerEvents: eventIdx > 0 ? 'all' : 'none' }} onClick={(ev) => changeEvent(ev, -1)}>{'←'}</button>
-              <div style={{ fontSize: '24px', userSelect: 'none' }}>
-                {(eventIdx + 1).toString().padStart(3, '0')} / {events.length.toString().padStart(3, '0')}
+
+            {walk.events.length ? (<>
+              <div style={{ display: 'flex', justifyContent: 'space-evenly' }}>
+                <button style={{ cursor: 'pointer', userSelect: 'none', opacity: eventIdx > 0 ? '1' : '0', pointerEvents: eventIdx > 0 ? 'all' : 'none' }} onClick={(ev) => changeEvent(ev, -1)}>{'←'}</button>
+                <div style={{ fontSize: '24px', userSelect: 'none' }}>
+                  {(eventIdx + 1).toString().padStart(3, '0')} / {events.length.toString().padStart(3, '0')}
+                </div>
+                <button style={{ cursor: 'pointer', userSelect: 'none', opacity: eventIdx < events.length - 1 ? '1' : '0', pointerEvents: eventIdx < events.length - 1 ? 'all' : 'none'  }} onClick={(ev) => changeEvent(ev, 1)}>{'→'}</button>
               </div>
-              <button style={{ cursor: 'pointer', userSelect: 'none', opacity: eventIdx < events.length - 1 ? '1' : '0', pointerEvents: eventIdx < events.length - 1 ? 'all' : 'none'  }} onClick={(ev) => changeEvent(ev, 1)}>{'→'}</button>
-            </div>
-            <div style={{ fontSize: '18px', marginTop: '1em' }}>
-              Mark: {millisecondsToTimespan(walkEvent.mark || walkEvent.timestamp - startTime)}
-            </div>
-            <div>
-              <button onClick={() => deleteEvent(walkIdx, eventIdx)}>Delete event</button>
-            </div>
-            <div
-              className="event"
-              style={{ textAlign: 'left', fontSize: '18px', marginTop: '1em', padding: '0 1em' }}
-              key={walkEvent.id}
-            >
+              <div style={{ fontSize: '18px', marginTop: '1em' }}>
+                Mark: {millisecondsToTimespan(walkEvent?.mark || walkEvent?.timestamp - startTime)}
+              </div>
               <div>
-                Start&nbsp;&nbsp;
-                <input
-                  onClick={handleStartOrEndClick}
-                  onChange={(ev) => { setEventProperty('start', ev.target.value) }}
-                  style={{ textAlign: 'center', marginLeft: '1em', width: '6.2em' }}
-                  type="text"
-                  value={millisecondsToTimespan(walkEvent.start)}
-                ></input>
+                <button onClick={() => deleteEvent(walkIdx, eventIdx)}>Delete event</button>
               </div>
-
-              <div style={{ marginTop: '0.5em' }} title={`${eventIdx} - ${walkEvent.id}`}>
-                <span onClick={() => { window.open(`https://www.google.com/maps/place/${walkEvent.coords[0]},${walkEvent.coords[1]}`, '_blank') }}>
-                  Name
-                </span>
-                <input
-                  style={{ marginLeft: '1em' }}
-                  disabled={walkEvent.tags}
-                  onChange={(ev) => updateText('name', ev.target.value)}
-                  className="name"
-                  type="text"
-                  value={walkEvent.name}
-                ></input>
-              </div>
-
-              <div style={{ marginTop: '0.5em' }}>
-                End&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                <input
-                  onClick={handleStartOrEndClick}
-                  onChange={(ev) => { setEventProperty('end', ev.target.value) }}
-                  style={{ textAlign: 'center', marginleft: '1em', width: '6.2em' }}
-                  type="text"
-                  value={millisecondsToTimespan(walkEvent.end)}
-                ></input>
-              </div>
-
-              <div style={{ marginTop: '1em', textAlign: 'center' }}>
-                Plates
-                <PlateInputs
-                  eventId={walkEvent.id}
-                  onPlateUpdate={(updated) => { walkEvent.plates = updated; writeWalks(); }}
-                  plates={((!walkEvent.tags || walkEvent.tags.length === 0) && walkEvent.plates) || []}
-                />
-              </div>
-
-              <div style={{ display: 'flex', justifyContent: 'space-evenly', marginTop: '1em' }}>
+              <div
+                className="event"
+                style={{ textAlign: 'left', fontSize: '18px', marginTop: '1em', padding: '0 1em' }}
+                key={walkEvent?.id}
+              >
                 <div>
-                  Skip:
+                  Start&nbsp;&nbsp;
                   <input
-                    className="skip"
-                    type="checkbox"
-                    onChange={(ev) => updateCheckbox('skip', ev.target.checked)}
-                    defaultChecked={walkEvent.skip === true}
+                    onClick={handleStartOrEndClick}
+                    onChange={(ev) => { setEventProperty('start', ev.target.value) }}
+                    style={{ textAlign: 'center', marginLeft: '1em', width: '6.2em' }}
+                    type="text"
+                    value={millisecondsToTimespan(walkEvent?.start)}
                   ></input>
                 </div>
-                <div>
-                  Resi:
-                  <input 
-                    className="resi"
-                    type="checkbox"
-                    onChange={(ev) => updateCheckbox('resi', ev.target.checked)}
-                    defaultChecked={walkEvent.resi === true}
-                  ></input>
-                </div>
-              </div>
 
-              <div style={{ marginTop: '1em', textAlign: 'center' }}>
-                Tags
-                <TagInputs
-                  backupEvents={writeWalks}
-                  onTagUpdate={(updated) => { walkEvent.tags = updated.map(e => e.value); writeWalks(); }}
-                  tags={walkEvent.tags} 
-                />
+                <div style={{ marginTop: '0.5em' }} title={`${eventIdx} - ${walkEvent?.id}`}>
+                  <span onClick={() => { window.open(`https://www.google.com/maps/place/${walkEvent?.coords[0]},${walkEvent?.coords[1]}`, '_blank') }}>
+                    Name
+                  </span>
+                  <input
+                    style={{ marginLeft: '1em' }}
+                    disabled={walkEvent?.tags}
+                    onChange={(ev) => updateText('name', ev.target.value)}
+                    className="name"
+                    type="text"
+                    value={walkEvent?.name}
+                  ></input>
+                </div>
+
+                <div style={{ marginTop: '0.5em' }}>
+                  End&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                  <input
+                    onClick={handleStartOrEndClick}
+                    onChange={(ev) => { setEventProperty('end', ev.target.value) }}
+                    style={{ textAlign: 'center', marginleft: '1em', width: '6.2em' }}
+                    type="text"
+                    value={millisecondsToTimespan(walkEvent?.end)}
+                  ></input>
+                </div>
+
+                <div style={{ marginTop: '1em', textAlign: 'center' }}>
+                  Plates
+                  <PlateInputs
+                    eventId={walkEvent?.id}
+                    onPlateUpdate={(updated) => { walkEvent.plates = updated; writeWalks(); }}
+                    plates={((!walkEvent?.tags || walkEvent?.tags.length === 0) && walkEvent?.plates) || []}
+                  />
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'space-evenly', marginTop: '1em' }}>
+                  <div>
+                    Skip:
+                    <input
+                      className="skip"
+                      type="checkbox"
+                      onChange={(ev) => updateCheckbox('skip', ev.target.checked)}
+                      defaultChecked={walkEvent?.skip === true}
+                    ></input>
+                  </div>
+                  <div>
+                    Resi:
+                    <input 
+                      className="resi"
+                      type="checkbox"
+                      onChange={(ev) => updateCheckbox('resi', ev.target.checked)}
+                      defaultChecked={walkEvent?.resi === true}
+                    ></input>
+                  </div>
+                </div>
+
+                <div style={{ marginTop: '1em', textAlign: 'center' }}>
+                  Tags
+                  <TagInputs
+                    backupEvents={writeWalks}
+                    onTagUpdate={(updated) => { walkEvent.tags = updated.map(e => e.value); writeWalks(); }}
+                    tags={walkEvent?.tags} 
+                  />
+                </div>
               </div>
-              
-              <div style={{ textAlign: 'center', margin: '1em 0' }}>
-                <button onClick={() => addEvent(walkIdx, eventIdx, false)}>Add event after</button>
-              </div>
-            </div>
+            </>) : 'No events to display'}
           </div>
         </div>
       </div>
