@@ -108,7 +108,7 @@ export default function EventInputs({ year, month, day, revert }) {
     }
   }, [eventOffset, year, month, day, setWalks]);
 
-  const addEvent = useCallback((walkIdx, eventIdx, before) => {
+  const addEvent = useCallback((walkIdx) => {
     const player = document.querySelector('#wip-video');
     if (!player) {
       alert('Load a video first!');
@@ -116,21 +116,17 @@ export default function EventInputs({ year, month, day, revert }) {
     }
     const currentVideoTime = currentTimeToTimestamp(player.currentTime);
     const walk = walks[walkIdx];
-    const newEvent = { id: crypto.randomUUID(), trimmedStart: timespanToMilliseconds(currentVideoTime), plates: [], coords: undefined };
-    if (walk.events.length === 0) {
+    const eventOffset = timespanToMilliseconds(currentVideoTime);
+    const newEvent = { id: crypto.randomUUID(), timestamp: walk.startTime + eventOffset, trimmedStart: eventOffset, plates: [], coords: undefined };
+    if (!walk.events) {
       walk.events = [];
     }
-    if (before) {
-      if (eventIdx === 0) {
-        walk.events = [newEvent, ...walk.events];
-      } else {
-        walk.events = walk.events.toSpliced(eventIdx, 0, newEvent);
-      }
-    } else {
-      walk.events = walk.events.toSpliced(eventIdx + 1, 0, newEvent);
-    }
+    const eventsReversed = walk.events.toReversed();
+    const afterIdx = (eventsReversed.findIndex(e => e.trimmedStart < newEvent.trimmedStart) ?? 0) + 1;
+    walk.events = walk.events.toSpliced(afterIdx, 0, newEvent);
     const updatedWalks = JSON.parse(JSON.stringify(walks));
     setWalks(updatedWalks);
+    setEventIdx(afterIdx);
     writeWalks();
   }, [setWalks, walks, writeWalks]);
 
@@ -227,11 +223,13 @@ export default function EventInputs({ year, month, day, revert }) {
     setTimeout(() => {
       const walk = walks[walkIdx];
       const event = walk.events[eventIdx];
-      const offsetMs = timespanToMilliseconds(eventOffset);
-      if (event.timestamp) {
-        setPlayerTime(((event.timestamp - walk.startTime) / 1000) + (offsetMs / 1000));
-      } else {
-        setPlayerTime((event.mark / 1000) + (offsetMs / 1000));
+      if (event) {
+        const offsetMs = timespanToMilliseconds(eventOffset);
+        if (event.timestamp) {
+          setPlayerTime(((event.timestamp - walk.startTime) / 1000) + (offsetMs / 1000));
+        } else {
+          setPlayerTime((event.mark / 1000) + (offsetMs / 1000));
+        }
       }
     }, 250);
   }, [eventIdx, eventOffset, walks, walkIdx]);
@@ -305,14 +303,14 @@ export default function EventInputs({ year, month, day, revert }) {
             <hr />
 
             <div style={{ textAlign: 'center', marginBottom: '1em' }}>
-              <button onClick={() => addEvent(walkIdx, 0, true)}>Add event at current time</button>
+              <button onClick={() => addEvent(walkIdx)}>Add event at current time</button>
             </div>
 
             {walk.events.length ? (<>
               <div style={{ display: 'flex', justifyContent: 'space-evenly' }}>
                 <button style={{ cursor: 'pointer', userSelect: 'none', opacity: eventIdx > 0 ? '1' : '0', pointerEvents: eventIdx > 0 ? 'all' : 'none' }} onClick={(ev) => changeEvent(ev, -1)}>{'←'}</button>
                 <div style={{ fontSize: '24px', userSelect: 'none' }}>
-                  {(eventIdx + 1).toString().padStart(3, '0')} / {events.length.toString().padStart(3, '0')}
+                  {events.length ? `${(eventIdx + 1).toString().padStart(3, '0')} / ${events.length.toString().padStart(3, '0')}` : '0 / 0'}
                 </div>
                 <button style={{ cursor: 'pointer', userSelect: 'none', opacity: eventIdx < events.length - 1 ? '1' : '0', pointerEvents: eventIdx < events.length - 1 ? 'all' : 'none'  }} onClick={(ev) => changeEvent(ev, 1)}>{'→'}</button>
               </div>
