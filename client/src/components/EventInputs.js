@@ -11,6 +11,7 @@ import millisecondsToTimespan from '../util/millisecondsToTimespan';
 import { dateWalksPrefix } from '../util/consts';
 import getWalkData from '../util/getWalkData';
 import exportEvents from '../util/exportEvents';
+import getInterpolatedCoordinatesFromTime from '../util/getInterpolatedCoordinatesFromTime';
 
 function setPlayerTime(time) {
   const player = document.querySelector('#wip-video');
@@ -123,6 +124,8 @@ export default function EventInputs({ year, month, day, revert }) {
     }
     const eventsReversed = walk.events.toReversed();
     const afterIdx = (eventsReversed.findIndex(e => e.trimmedStart < newEvent.trimmedStart) ?? 0) + 1;
+    const newCoords = getInterpolatedCoordinatesFromTime(walk.coords, newEvent.timestamp);
+    newEvent.coords = newCoords;
     walk.events = walk.events.toSpliced(afterIdx, 0, newEvent);
     const updatedWalks = JSON.parse(JSON.stringify(walks));
     setWalks(updatedWalks);
