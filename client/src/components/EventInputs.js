@@ -122,11 +122,17 @@ export default function EventInputs({ year, month, day, revert }) {
     if (!walk.events) {
       walk.events = [];
     }
-    const eventsReversed = walk.events.toReversed();
-    const afterIdx = (eventsReversed.findIndex(e => e.trimmedStart < newEvent.trimmedStart) ?? 0) + 1;
     const newCoords = getInterpolatedCoordinatesFromTime(walk.coords, newEvent.timestamp);
     newEvent.coords = newCoords;
+
+    const reversedEvents = walk.events.toReversed();
+    const afterEvent = reversedEvents.find(e => e.timestamp < newEvent.timestamp);
+    let afterIdx = 0;
+    if (afterEvent) {
+      afterIdx = walk.events.findIndex(e => e.id === afterEvent.id) + 1;
+    }
     walk.events = walk.events.toSpliced(afterIdx, 0, newEvent);
+
     const updatedWalks = JSON.parse(JSON.stringify(walks));
     setWalks(updatedWalks);
     setEventIdx(afterIdx);
